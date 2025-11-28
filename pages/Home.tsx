@@ -1,14 +1,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../App';
 import { KUBA_LOGO_URL, AD_URL } from '../constants';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { state, setLanguage } = useAppContext();
 
   const handleEarnClick = () => {
     // Direct link as requested for "Ad Revenue" button
     window.open(AD_URL, '_blank');
   };
+
+  const languages = [
+    { code: 'en-US', label: '🇬🇧 EN' },
+    { code: 'th-TH', label: '🇹🇭 TH' },
+    { code: 'zh-CN', label: '🇨🇳 CN' },
+  ];
 
   return (
     <div className="flex flex-col items-center justify-center flex-grow space-y-8 animate-fade-in py-8">
@@ -33,6 +41,23 @@ const Home: React.FC = () => {
         <p className="text-gray-400 text-sm max-w-[250px] mx-auto">
           The only coin that trolls you back. Earn rewards while getting roasted.
         </p>
+        
+        {/* Language Selector */}
+        <div className="flex gap-2 justify-center pt-2">
+          {languages.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => setLanguage(lang.code)}
+              className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                state.language === lang.code
+                  ? 'bg-kuba-yellow text-black border-kuba-yellow transform scale-105 shadow-md'
+                  : 'bg-transparent text-gray-500 border-gray-700 hover:border-gray-500'
+              }`}
+            >
+              {lang.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Action Buttons */}

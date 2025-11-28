@@ -13,6 +13,7 @@ interface AppContextType {
   incrementBalance: (amount: number) => void;
   decrementQuota: () => void;
   addQuota: () => void;
+  setLanguage: (lang: string) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -69,8 +70,12 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, dailyQuota: prev.dailyQuota + AD_REWARD_QUOTA }));
   };
 
+  const setLanguage = (lang: string) => {
+    setState(prev => ({ ...prev, language: lang }));
+  };
+
   return (
-    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota }}>
+    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage }}>
       <HashRouter>
         <Layout>
           <Routes>
