@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
-import { generateTrollResponse } from '../services/geminiService';
+import { generateLocalResponse } from '../services/localAi';
 import { ChatMessage } from '../types';
 import { AD_URL, INTERACTION_REWARD } from '../constants';
 
@@ -10,10 +10,6 @@ const Chat: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Load chat history from local state if needed, here we start fresh or from memory
-  // For simplicity in this demo, ephemeral chat (clears on refresh)
-  // If persistence is needed, add 'history' to AppState in App.tsx
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,7 +39,8 @@ const Chat: React.FC = () => {
     decrementQuota();
 
     try {
-      const responseText = await generateTrollResponse(userMsg.text, state.language);
+      // Use Local AI Service instead of Google
+      const responseText = await generateLocalResponse(userMsg.text, state.language);
       
       const aiMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -68,11 +65,10 @@ const Chat: React.FC = () => {
     const confirmed = window.confirm("Watch a short ad to get +2 chats?");
     if (confirmed) {
       window.open(AD_URL, '_blank');
-      // Simulation of ad completion
       setTimeout(() => {
         addQuota();
         alert("Thanks for watching! +2 Quota added.");
-      }, 3000); // Wait 3s to simulate return
+      }, 3000); 
     }
   };
 
@@ -118,7 +114,7 @@ const Chat: React.FC = () => {
         {isLoading && (
           <div className="flex justify-start">
              <div className="bg-white text-black p-3 rounded-2xl rounded-tl-none text-xs font-bold animate-pulse">
-               Thinking of a good roast...
+               Processing nonsense...
              </div>
           </div>
         )}
@@ -133,7 +129,7 @@ const Chat: React.FC = () => {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder={state.dailyQuota > 0 ? "Type something funny..." : "Out of quota!"}
+            placeholder={state.dailyQuota > 0 ? "Type something..." : "Out of quota!"}
             disabled={state.dailyQuota <= 0 || isLoading}
             className="flex-grow bg-gray-800 text-white border border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:border-kuba-yellow placeholder-gray-500"
           />
