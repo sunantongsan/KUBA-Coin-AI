@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
 import { CONTRACT_ADDRESS, KUBA_LOGO_URL } from '../constants';
@@ -10,8 +9,8 @@ const Wallet: React.FC = () => {
   const [animClass, setAnimClass] = useState('animate-float');
 
   useEffect(() => {
-    // Randomly select an animation from the expanded list
-    const animations = ['animate-float', 'animate-wiggle', 'animate-bounce-slow', 'animate-tilt'];
+    // Randomly select an animation
+    const animations = ['animate-float', 'animate-wiggle'];
     const randomAnim = animations[Math.floor(Math.random() * animations.length)];
     setAnimClass(randomAnim);
   }, []);
@@ -20,19 +19,6 @@ const Wallet: React.FC = () => {
     navigator.clipboard.writeText(CONTRACT_ADDRESS);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleWithdraw = () => {
-    alert("Withdrawal System Coming Soon! \nKeep accumulating KUBA. We will announce when the liquidity pool is ready.");
-  };
-
-  const openChart = () => {
-    const chartUrl = 'https://geckoterminal.com';
-    if (window.Telegram?.WebApp?.openLink) {
-      window.Telegram.WebApp.openLink(chartUrl);
-    } else {
-      window.open(chartUrl, '_blank');
-    }
   };
 
   // Fake chart data for visual appeal
@@ -47,23 +33,7 @@ const Wallet: React.FC = () => {
   return (
     <div className="flex flex-col items-center space-y-6 animate-fade-in pb-10">
       
-      {/* User Profile Header */}
-      <div className="w-full flex items-center gap-3 bg-gray-900 p-3 rounded-xl border border-gray-800">
-        <div className="w-10 h-10 bg-kuba-yellow rounded-full flex items-center justify-center font-bold text-black">
-          {state.telegramUsername ? state.telegramUsername.charAt(0).toUpperCase() : 'G'}
-        </div>
-        <div className="flex-col overflow-hidden">
-          <h3 className="text-sm font-bold text-white truncate">
-            {state.telegramUsername || 'Guest User'}
-          </h3>
-          <p className="text-xs text-gray-500">ID: {state.telegramUserId || 'Local-Dev'}</p>
-        </div>
-        <div className="ml-auto bg-green-900 text-green-300 text-[10px] px-2 py-1 rounded-full">
-          CONNECTED
-        </div>
-      </div>
-
-      {/* Animated Mascot */}
+      {/* Animated Mascot Header */}
       <div className="flex flex-col items-center justify-center pt-2">
          <img 
           src={KUBA_LOGO_URL} 
@@ -86,24 +56,6 @@ const Wallet: React.FC = () => {
         <div className="mt-4 text-xs text-green-400 font-mono">
           ▲ +{state.balance > 0 ? '100%' : '0%'} today (Airdrop)
         </div>
-      </div>
-
-      {/* Action Buttons: Withdraw */}
-      <div className="w-full grid grid-cols-2 gap-3">
-         <button 
-           className="bg-gray-700 text-gray-400 font-bold py-3 rounded-xl cursor-not-allowed border border-gray-600 flex flex-col items-center justify-center"
-           onClick={handleWithdraw}
-         >
-           <span className="text-xs">WITHDRAW</span>
-           <span className="text-[10px] opacity-75">(Coming Soon)</span>
-         </button>
-         <button 
-           className="bg-kuba-yellow text-black font-bold py-3 rounded-xl hover:bg-yellow-400 transition-colors flex flex-col items-center justify-center shadow-lg"
-           onClick={openChart}
-         >
-           <span className="text-xs">VIEW CHART</span>
-           <span className="text-[10px] opacity-75">Live Price</span>
-         </button>
       </div>
 
       {/* Chart Visualization */}
@@ -150,6 +102,14 @@ const Wallet: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* External Chart Link */}
+      <button 
+        className="w-full bg-white text-black font-bold py-3 rounded-xl shadow-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+        onClick={() => window.open('https://geckoterminal.com', '_blank')} 
+      >
+        <span>📈</span> View Live Chart
+      </button>
 
     </div>
   );
