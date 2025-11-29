@@ -4,6 +4,7 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   timestamp: number;
+  feedback?: 'up' | 'down';
 }
 
 export interface AppState {

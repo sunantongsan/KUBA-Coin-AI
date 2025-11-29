@@ -93,6 +93,31 @@ const Chat: React.FC = () => {
     alert("Shared! +100 KUBA added to your wallet.");
   };
 
+  const handleFeedback = (msgId: string, type: 'up' | 'down') => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === msgId) {
+        // Log to localStorage for "training"
+        const logEntry = {
+          timestamp: new Date().toISOString(),
+          msgId: msg.id,
+          response: msg.text,
+          feedback: type,
+          userId: state.telegramUserId
+        };
+        
+        try {
+          const existingLogs = JSON.parse(localStorage.getItem('kuba_ai_feedback_logs') || '[]');
+          localStorage.setItem('kuba_ai_feedback_logs', JSON.stringify([...existingLogs, logEntry]));
+        } catch (e) {
+          console.error("Failed to save feedback log", e);
+        }
+
+        return { ...msg, feedback: type };
+      }
+      return msg;
+    }));
+  };
+
   return (
     <div className="flex flex-col h-full relative">
       {/* Top Bar: Quota & Share */}
@@ -128,7 +153,7 @@ const Chat: React.FC = () => {
         )}
         
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
             <div 
               className={`max-w-[80%] p-3 rounded-2xl text-sm ${
                 msg.role === 'user' 
@@ -141,6 +166,26 @@ const Chat: React.FC = () => {
                 {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </span>
             </div>
+            
+            {/* Feedback Buttons for AI messages */}
+            {msg.role === 'model' && (
+              <div className="flex gap-2 mt-1 ml-1">
+                <button 
+                  onClick={() => handleFeedback(msg.id, 'up')}
+                  className={`p-1 rounded transition-colors ${msg.feedback === 'up' ? 'text-green-500 bg-gray-800' : 'text-gray-500 hover:text-green-400'}`}
+                  disabled={!!msg.feedback}
+                >
+                  👍
+                </button>
+                <button 
+                  onClick={() => handleFeedback(msg.id, 'down')}
+                  className={`p-1 rounded transition-colors ${msg.feedback === 'down' ? 'text-red-500 bg-gray-800' : 'text-gray-500 hover:text-red-400'}`}
+                  disabled={!!msg.feedback}
+                >
+                  👎
+                </button>
+              </div>
+            )}
           </div>
         ))}
         {isLoading && (

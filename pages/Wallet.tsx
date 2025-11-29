@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
 import { CONTRACT_ADDRESS, KUBA_LOGO_URL } from '../constants';
@@ -10,8 +9,8 @@ const Wallet: React.FC = () => {
   const [animClass, setAnimClass] = useState('animate-float');
 
   useEffect(() => {
-    // Randomly select an animation
-    const animations = ['animate-float', 'animate-wiggle'];
+    // Randomly select an animation from the expanded list
+    const animations = ['animate-float', 'animate-wiggle', 'animate-bounce-slow', 'animate-tilt'];
     const randomAnim = animations[Math.floor(Math.random() * animations.length)];
     setAnimClass(randomAnim);
   }, []);
