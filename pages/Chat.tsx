@@ -65,13 +65,14 @@ const Chat: React.FC = () => {
   const handleWatchAd = () => {
     const confirmed = window.confirm("Watch a short ad to get +2 chats?");
     if (confirmed) {
-      // Use Telegram Native Link Opener
+      // Use Telegram Native Link Opener for better integration
       if (window.Telegram?.WebApp?.openLink) {
         window.Telegram.WebApp.openLink(AD_URL, { try_instant_view: false });
       } else {
         window.open(AD_URL, '_blank', 'noopener,noreferrer');
       }
 
+      // Simulate verification/time passing for reward
       setTimeout(() => {
         addQuota();
         alert("Thanks for watching! +2 Quota added.");
