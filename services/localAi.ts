@@ -154,18 +154,33 @@ const aiDatabase: ResponseDatabase = {
   }
 };
 
-export const generateLocalResponse = async (text: string, langCode: string): Promise<string> => {
+const detectLanguage = (text: string, preferredLang: string): string => {
+  // Regex detection for scripts
+  if (/[\u0E00-\u0E7F]/.test(text)) {
+    return 'th-TH'; // Thai Script Detected
+  }
+  if (/[\u4E00-\u9FFF]/.test(text)) {
+    return 'zh-CN'; // Chinese Script Detected
+  }
+  
+  // If the user hasn't typed in a specific script, trust their preference 
+  // BUT fallback to English if their preference is invalid
+  if (aiDatabase[preferredLang]) {
+    return preferredLang;
+  }
+  
+  return 'en-US';
+};
+
+export const generateLocalResponse = async (text: string, userPreferredLang: string): Promise<string> => {
   // Simulate network delay to make it feel "Real"
   await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
 
   const cleanText = text.toLowerCase();
   
-  // Determine language set to use (Default to English if not Thai/Chinese)
-  let langKey = 'en-US';
-  if (langCode === 'th-TH' || /[\u0E00-\u0E7F]/.test(cleanText)) langKey = 'th-TH'; 
-  else if (langCode === 'zh-CN') langKey = 'zh-CN';
-
-  const db = aiDatabase[langKey] || aiDatabase['en-US'];
+  // Robust Language Detection
+  const langKey = detectLanguage(text, userPreferredLang);
+  const db = aiDatabase[langKey];
 
   // --- CHAOS MODE LOGIC ---
   // 30% Chance to completely ignore the user's question and say something random (Troll behavior)

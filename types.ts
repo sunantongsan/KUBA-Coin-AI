@@ -33,6 +33,7 @@ declare global {
         expand: () => void;
         setHeaderColor: (color: string) => void;
         openTelegramLink: (url: string) => void;
+        openLink: (url: string, options?: { try_instant_view?: boolean }) => void;
         initDataUnsafe: {
           user?: {
             id: number;

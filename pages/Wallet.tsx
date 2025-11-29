@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
 import { CONTRACT_ADDRESS, KUBA_LOGO_URL } from '../constants';
@@ -23,6 +24,15 @@ const Wallet: React.FC = () => {
 
   const handleWithdraw = () => {
     alert("Withdrawal System Coming Soon! \nKeep accumulating KUBA. We will announce when the liquidity pool is ready.");
+  };
+
+  const openChart = () => {
+    const chartUrl = 'https://geckoterminal.com';
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(chartUrl);
+    } else {
+      window.open(chartUrl, '_blank');
+    }
   };
 
   // Fake chart data for visual appeal
@@ -89,7 +99,7 @@ const Wallet: React.FC = () => {
          </button>
          <button 
            className="bg-kuba-yellow text-black font-bold py-3 rounded-xl hover:bg-yellow-400 transition-colors flex flex-col items-center justify-center shadow-lg"
-           onClick={() => window.open('https://geckoterminal.com', '_blank')}
+           onClick={openChart}
          >
            <span className="text-xs">VIEW CHART</span>
            <span className="text-[10px] opacity-75">Live Price</span>

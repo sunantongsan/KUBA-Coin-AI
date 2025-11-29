@@ -40,7 +40,7 @@ const Chat: React.FC = () => {
     decrementQuota();
 
     try {
-      // Use Local AI Service
+      // Use Local AI Service with enhanced detection
       const responseText = await generateLocalResponse(userMsg.text, state.language);
       
       const aiMsg: ChatMessage = {
@@ -65,7 +65,13 @@ const Chat: React.FC = () => {
   const handleWatchAd = () => {
     const confirmed = window.confirm("Watch a short ad to get +2 chats?");
     if (confirmed) {
-      window.open(AD_URL, '_blank');
+      // Use Telegram Native Link Opener
+      if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(AD_URL);
+      } else {
+        window.open(AD_URL, '_blank');
+      }
+
       setTimeout(() => {
         addQuota();
         alert("Thanks for watching! +2 Quota added.");
