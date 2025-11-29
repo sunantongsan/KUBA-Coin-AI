@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
-import { CONTRACT_ADDRESS } from '../constants';
+import { CONTRACT_ADDRESS, KUBA_LOGO_URL } from '../constants';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const Wallet: React.FC = () => {
   const { state } = useAppContext();
   const [copied, setCopied] = useState(false);
+  const [animClass, setAnimClass] = useState('animate-float');
+
+  useEffect(() => {
+    // Randomly select an animation
+    const animations = ['animate-float', 'animate-wiggle'];
+    const randomAnim = animations[Math.floor(Math.random() * animations.length)];
+    setAnimClass(randomAnim);
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(CONTRACT_ADDRESS);
@@ -25,6 +33,16 @@ const Wallet: React.FC = () => {
   return (
     <div className="flex flex-col items-center space-y-6 animate-fade-in pb-10">
       
+      {/* Animated Mascot Header */}
+      <div className="flex flex-col items-center justify-center pt-2">
+         <img 
+          src={KUBA_LOGO_URL} 
+          alt="KUBA Mascot" 
+          className={`w-20 h-20 rounded-full border-2 border-kuba-yellow mb-2 shadow-lg ${animClass}`}
+        />
+        <h2 className="text-xl font-bold tracking-widest uppercase">My Stash</h2>
+      </div>
+
       {/* Balance Card */}
       <div className="w-full bg-gradient-to-br from-gray-800 to-black border border-gray-700 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-10">

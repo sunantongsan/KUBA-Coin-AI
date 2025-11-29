@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../App';
 import { KUBA_LOGO_URL, AD_URL } from '../constants';
@@ -6,6 +6,14 @@ import { KUBA_LOGO_URL, AD_URL } from '../constants';
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { state, setLanguage } = useAppContext();
+  const [animClass, setAnimClass] = useState('animate-float');
+
+  useEffect(() => {
+    // Randomly select an animation on mount to keep it fresh
+    const animations = ['animate-float', 'animate-wiggle', 'animate-bounce-slow'];
+    const randomAnim = animations[Math.floor(Math.random() * animations.length)];
+    setAnimClass(randomAnim);
+  }, []);
 
   const handleEarnClick = () => {
     // Direct link as requested for "Ad Revenue" button
@@ -27,7 +35,7 @@ const Home: React.FC = () => {
         <img 
           src={KUBA_LOGO_URL} 
           alt="KUBA Logo" 
-          className="relative w-48 h-48 rounded-full border-4 border-kuba-black shadow-2xl transform transition hover:scale-105"
+          className={`relative w-48 h-48 rounded-full border-4 border-kuba-black shadow-2xl transform transition hover:scale-105 ${animClass}`}
         />
         <div className="absolute bottom-0 right-0 bg-white text-black text-xs font-bold px-2 py-1 rounded-full border border-black transform rotate-12">
           TROLL MODE
