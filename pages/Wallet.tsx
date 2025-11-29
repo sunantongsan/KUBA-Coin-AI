@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
 import { CONTRACT_ADDRESS, KUBA_LOGO_URL } from '../constants';
@@ -7,10 +8,12 @@ const Wallet: React.FC = () => {
   const { state } = useAppContext();
   const [copied, setCopied] = useState(false);
   const [animClass, setAnimClass] = useState('animate-float');
+  const [mascotUrl, setMascotUrl] = useState(KUBA_LOGO_URL);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    // Randomly select an animation
-    const animations = ['animate-float', 'animate-wiggle'];
+    // Randomly select an animation from the expanded list
+    const animations = ['animate-float', 'animate-wiggle', 'animate-bounce-slow', 'animate-tilt'];
     const randomAnim = animations[Math.floor(Math.random() * animations.length)];
     setAnimClass(randomAnim);
   }, []);
@@ -19,6 +22,38 @@ const Wallet: React.FC = () => {
     navigator.clipboard.writeText(CONTRACT_ADDRESS);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleWithdraw = () => {
+    alert("Withdrawal System Coming Soon! \nKeep accumulating KUBA. We will announce when the liquidity pool is ready.");
+  };
+
+  const handleGenerateMascot = () => {
+    setIsGenerating(true);
+    // Use Robohash set2 (Monsters) for a troll-ish vibe
+    const randomSeed = Math.random().toString(36).substring(7);
+    const newUrl = `https://robohash.org/${randomSeed}.png?set=set2&size=200x200`;
+    
+    // Preload image to avoid flickering
+    const img = new Image();
+    img.src = newUrl;
+    img.onload = () => {
+      setMascotUrl(newUrl);
+      setIsGenerating(false);
+    };
+    img.onerror = () => {
+      setIsGenerating(false);
+      alert("Failed to generate mascot. Try again!");
+    };
+  };
+
+  const openChart = () => {
+    const chartUrl = 'https://geckoterminal.com';
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(chartUrl, { try_instant_view: false });
+    } else {
+      window.open(chartUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   // Fake chart data for visual appeal
@@ -33,13 +68,39 @@ const Wallet: React.FC = () => {
   return (
     <div className="flex flex-col items-center space-y-6 animate-fade-in pb-10">
       
-      {/* Animated Mascot Header */}
-      <div className="flex flex-col items-center justify-center pt-2">
-         <img 
-          src={KUBA_LOGO_URL} 
-          alt="KUBA Mascot" 
-          className={`w-20 h-20 rounded-full border-2 border-kuba-yellow mb-2 shadow-lg ${animClass}`}
-        />
+      {/* User Profile Header */}
+      <div className="w-full flex items-center gap-3 bg-gray-900 p-3 rounded-xl border border-gray-800">
+        <div className="w-10 h-10 bg-kuba-yellow rounded-full flex items-center justify-center font-bold text-black">
+          {state.telegramUsername ? state.telegramUsername.charAt(0).toUpperCase() : 'G'}
+        </div>
+        <div className="flex-col overflow-hidden">
+          <h3 className="text-sm font-bold text-white truncate">
+            {state.telegramUsername || 'Guest User'}
+          </h3>
+          <p className="text-xs text-gray-500">ID: {state.telegramUserId || 'Local-Dev'}</p>
+        </div>
+        <div className="ml-auto bg-green-900 text-green-300 text-[10px] px-2 py-1 rounded-full">
+          CONNECTED
+        </div>
+      </div>
+
+      {/* Animated Mascot & Generator */}
+      <div className="flex flex-col items-center justify-center pt-2 relative">
+         <div className="relative">
+            <img 
+              src={mascotUrl} 
+              alt="KUBA Mascot" 
+              className={`w-24 h-24 rounded-full border-4 border-kuba-yellow mb-2 shadow-lg bg-gray-800 ${isGenerating ? 'animate-spin opacity-50' : animClass}`}
+            />
+            <button 
+                onClick={handleGenerateMascot}
+                disabled={isGenerating}
+                className="absolute bottom-2 right-0 bg-gray-900 text-white p-2 rounded-full border border-gray-600 shadow-md active:scale-90 transition-transform hover:bg-gray-800 z-10"
+                title="Generate New Mascot"
+            >
+                🎨
+            </button>
+         </div>
         <h2 className="text-xl font-bold tracking-widest uppercase">My Stash</h2>
       </div>
 
@@ -56,6 +117,24 @@ const Wallet: React.FC = () => {
         <div className="mt-4 text-xs text-green-400 font-mono">
           ▲ +{state.balance > 0 ? '100%' : '0%'} today (Airdrop)
         </div>
+      </div>
+
+      {/* Action Buttons: Withdraw */}
+      <div className="w-full grid grid-cols-2 gap-3">
+         <button 
+           className="bg-gray-700 text-gray-400 font-bold py-3 rounded-xl cursor-not-allowed border border-gray-600 flex flex-col items-center justify-center"
+           onClick={handleWithdraw}
+         >
+           <span className="text-xs">WITHDRAW</span>
+           <span className="text-[10px] opacity-75">(Coming Soon)</span>
+         </button>
+         <button 
+           className="bg-kuba-yellow text-black font-bold py-3 rounded-xl hover:bg-yellow-400 transition-colors flex flex-col items-center justify-center shadow-lg"
+           onClick={openChart}
+         >
+           <span className="text-xs">VIEW CHART</span>
+           <span className="text-[10px] opacity-75">Live Price</span>
+         </button>
       </div>
 
       {/* Chart Visualization */}
@@ -102,14 +181,6 @@ const Wallet: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* External Chart Link */}
-      <button 
-        className="w-full bg-white text-black font-bold py-3 rounded-xl shadow-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-        onClick={() => window.open('https://geckoterminal.com', '_blank')} 
-      >
-        <span>📈</span> View Live Chart
-      </button>
 
     </div>
   );

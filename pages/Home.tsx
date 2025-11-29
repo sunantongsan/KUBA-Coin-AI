@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../App';
@@ -16,8 +17,12 @@ const Home: React.FC = () => {
   }, []);
 
   const handleEarnClick = () => {
-    // Direct link as requested for "Ad Revenue" button
-    window.open(AD_URL, '_blank');
+    // Use Telegram Native Link Opener if available
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(AD_URL);
+    } else {
+      window.open(AD_URL, '_blank');
+    }
   };
 
   const languages = [
