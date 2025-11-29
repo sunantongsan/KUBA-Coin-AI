@@ -13,7 +13,7 @@ const Wallet: React.FC = () => {
 
   useEffect(() => {
     // Randomly select an animation from the expanded list
-    const animations = ['animate-float', 'animate-wiggle', 'animate-bounce-slow', 'animate-tilt'];
+    const animations = ['animate-float', 'animate-wiggle', 'animate-bounce-slow', 'animate-tilt', 'animate-spin-reverse'];
     const randomAnim = animations[Math.floor(Math.random() * animations.length)];
     setAnimClass(randomAnim);
   }, []);

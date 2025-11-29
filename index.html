@@ -26,6 +26,7 @@
               'float': 'float 6s ease-in-out infinite',
               'wiggle': 'wiggle 3s ease-in-out infinite',
               'tilt': 'tilt 5s ease-in-out infinite',
+              'spin-reverse': 'spin-reverse 10s linear infinite',
             },
             keyframes: {
               float: {
@@ -40,6 +41,10 @@
                 '0%, 100%': { transform: 'rotate(0deg)' },
                 '25%': { transform: 'rotate(2deg)' },
                 '75%': { transform: 'rotate(-2deg)' },
+              },
+              'spin-reverse': {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(-360deg)' },
               }
             }
           }
