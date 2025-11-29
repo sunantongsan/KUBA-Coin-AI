@@ -1,3 +1,4 @@
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
@@ -6,6 +7,11 @@ export interface ChatMessage {
 }
 
 export interface AppState {
+  // User Identity
+  telegramUserId: number | null;
+  telegramUsername: string | null;
+  
+  // App Data
   balance: number;
   dailyQuota: number;
   lastResetDate: string;
@@ -21,7 +27,21 @@ export interface AdConfig {
 declare global {
   interface Window {
     Telegram: {
-      WebApp: any;
+      WebApp: {
+        ready: () => void;
+        expand: () => void;
+        setHeaderColor: (color: string) => void;
+        openTelegramLink: (url: string) => void;
+        initDataUnsafe: {
+          user?: {
+            id: number;
+            first_name: string;
+            last_name?: string;
+            username?: string;
+            language_code?: string;
+          };
+        };
+      };
     }
   }
 }

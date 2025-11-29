@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse } from '../services/localAi';
@@ -39,7 +40,7 @@ const Chat: React.FC = () => {
     decrementQuota();
 
     try {
-      // Use Local AI Service instead of Google
+      // Use Local AI Service
       const responseText = await generateLocalResponse(userMsg.text, state.language);
       
       const aiMsg: ChatMessage = {
@@ -72,19 +73,50 @@ const Chat: React.FC = () => {
     }
   };
 
+  const handleShare = () => {
+    // 1. Construct Share URL
+    const appUrl = "https://t.me/KubaCoinBot/app"; // Replace with your actual bot username if you have one
+    const shareText = "This AI is roasting me! Come get trolled and earn KUBA coins. 🤣🚀";
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}`;
+
+    // 2. Open Telegram Share
+    // Try to use WebApp API first, fallback to window.open
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
+    } else {
+        window.open(telegramShareUrl, '_blank');
+    }
+
+    // 3. Reward Logic (Instant reward for clicking share)
+    incrementBalance(100);
+    // Optional: Add visual feedback
+    alert("Shared! +100 KUBA added to your wallet.");
+  };
+
   return (
     <div className="flex flex-col h-full relative">
-      {/* Quota Banner */}
-      <div className="bg-gray-800 rounded-lg p-2 mb-4 flex justify-between items-center text-sm shadow-inner">
-        <span className="text-gray-400">Quota: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
-        {state.dailyQuota === 0 && (
-          <button 
-            onClick={handleWatchAd}
-            className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold animate-pulse"
-          >
-            +2 Chats (Watch Ad)
-          </button>
-        )}
+      {/* Top Bar: Quota & Share */}
+      <div className="flex justify-between items-center mb-4 gap-2">
+        <div className="bg-gray-800 rounded-lg p-2 flex-grow flex justify-between items-center text-sm shadow-inner">
+          <span className="text-gray-400">Quota: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
+          {state.dailyQuota === 0 && (
+            <button 
+              onClick={handleWatchAd}
+              className="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-bold animate-pulse"
+            >
+              +2 (Ad)
+            </button>
+          )}
+        </div>
+        
+        {/* Share Button */}
+        <button 
+          onClick={handleShare}
+          className="bg-blue-500 text-white p-2 rounded-lg font-bold text-xs shadow-md active:scale-95 transition-transform flex flex-col items-center leading-none"
+        >
+          <span>🚀</span>
+          <span>Share +100</span>
+        </button>
       </div>
 
       {/* Messages Area */}
