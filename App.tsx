@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Chat from './pages/Chat';
@@ -23,6 +23,18 @@ export const useAppContext = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error("useAppContext must be used within AppProvider");
   return context;
+};
+
+// Component to handle redirection on startup
+const StartupRedirect = () => {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Always redirect to home when the app mounts (fresh load or refresh)
+    navigate('/');
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  return null;
 };
 
 const App: React.FC = () => {
@@ -97,6 +109,7 @@ const App: React.FC = () => {
   return (
     <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage }}>
       <HashRouter>
+        <StartupRedirect />
         <Layout>
           <Routes>
             <Route path="/" element={<Home />} />
