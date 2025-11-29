@@ -19,9 +19,9 @@ const Home: React.FC = () => {
   const handleEarnClick = () => {
     // Use Telegram Native Link Opener if available
     if (window.Telegram?.WebApp?.openLink) {
-      window.Telegram.WebApp.openLink(AD_URL);
+      window.Telegram.WebApp.openLink(AD_URL, { try_instant_view: false });
     } else {
-      window.open(AD_URL, '_blank');
+      window.open(AD_URL, '_blank', 'noopener,noreferrer');
     }
   };
 
