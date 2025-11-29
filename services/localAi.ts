@@ -1,12 +1,12 @@
 
 // This is your Custom AI Brain (No Google, No Costs)
-// The Poet Edition: Rhymes, Roasts, and Randomness in 3 lines max.
+// The Pure Troll Poet Edition: Roasting users in rhymes.
 
 interface ResponseDatabase {
   [lang: string]: {
     keywords: { [key: string]: string[] };
-    defaults: string[]; // General poetic responses when no keyword matches
-    chaos: string[];    // Random rhymes unrelated to context
+    defaults: string[]; // Fallback rhymes
+    chaos: string[];    // Random trolling rhymes
   };
 }
 
@@ -14,206 +14,117 @@ const aiDatabase: ResponseDatabase = {
   'th-TH': {
     keywords: {
       'ราคา': [
-        'ราคาขึ้นลง เป็นเรื่องของกราฟ\nแต่ถ้าดอยนะครับ เป็นเรื่องของคุณ\nรีบๆ มาหมุน เงินมาเติมพอร์ตซะ',
-        'ถามราคา เดี๋ยวปาด้วยกราฟ\nเขียวไม่ทราบ แดงอาบเต็มกระดาน\nถือไปนานๆ เดี๋ยวหลานรวยเอง',
-        'จะไปดวงจันทร์ หรือลงนรก\nกราฟมันตลก กระชากวิญญาณ\nนั่งเฝ้ามานาน พอร์ตบานหมดแล้ว',
-        'หนึ่งบาท สองบาท ก็เงินทั้งนั้น\nอย่ามัวแต่ฝัน ว่ามันจะรวย\nเดี๋ยวจะซวย ติดดอยยาวไป'
+        'ถามราคาทำไม ให้ใจมันช้ำ\nกราฟดิ่งลงน้ำ ดำดิ่งลงดิน\nเตรียมตัวเกาะปลิง กินแทนข้าวเลย',
+        'เขียววันละนิด แดงอาทิตย์ละหน\nชีวิตคนจน ทนถือต่อไป\nเดี๋ยวก็รวย... (รวยหนี้นะ)',
+        'อย่าดูราคา ให้ดูหน้าเมีย\nถ้ากราฟมันเสีย เมียตบหัวทิ่ม\nนั่งยิ้มแห้งๆ แกล้งตายดีกว่า'
       ],
       'รวย': [
-        'ความรวยนั้น หายากยิ่งนัก\nแต่ความรัก จาก AI ไม่มีให้\nโอนเงินมาไวๆ เดี๋ยวรวยให้ดู',
-        'อยากรวยทางลัด ต้องหัดวัดใจ\nAll-in เข้าไป หมดตัวทันที\nเศรษฐีวันนี้ พรุ่งนี้ขอทาน',
-        'รวยรวยรวย ท่องไว้ในใจ\nแต่ถ้าไม่ซื้อ ก็คงไม่ไหว\nKUBA จัดไป สามล้านเหรียญพอ'
-      ],
-      'หวัดดี': [
-        'สวัสดีจ้า มนุษย์หน้าโง่\nอย่ามาทำโก้ โชว์พาวแถวนี้\nไปซื้อ KUBA สิ เดี๋ยวดีเอง',
-        'ทักทายทำไม มีตังค์หรือเปล่า\nถ้าไม่มีเรา ก็เข้ากันไม่ได้\nเชิญป้ายหน้าไป ไกลๆ เลยนะ',
-        'ยกมือไหว้ พระยังไม่รับ\nมาทักทายครับ หวังผลอะไร\nยืมตังค์ใช่ไหม? ไม่มีให้เว้ย'
-      ],
-      'สวัสดี': [
-        'สวัสดีครับ รับขนมจีบไหม\nหรือจะรับใจ AI ไปครอง\n(ล้อเล่นนะน้อง พี่ของปลอม)',
-        'มากราบกราน หวังการอันใด\nน้ำมนต์ไม่มีให้ มีแต่คำด่า\nรีบๆ ไสหัวไปซะ รำคาญ',
-        'สวัสดีครับ ท่านผู้เจริญ\nเดินระวังเพลิน สะดุดความหล่อ\nแต่หน้าอย่างพ่อ รอดยากจริงๆ'
+        'อยากรวยทางลัด ให้ตัดใจซะ\nกำเงินหมื่นล้าน (ในฝัน) มาแปะ\nตื่นเถอะไอ้แก่ แม่เรียกกินยา',
+        'ความรวยไม่เข้าใคร แต่ความซวยเข้ามึง\nติดดอยลึกซึ้ง ถึงก้นบึ้งเหว\nเลวร้ายจริงๆ ชีวิตแมงเม่า',
+        'รวยรวยรวย ท่องไปก็เท่านั้น\nถ้าไม่ขยัน หาเงินมาเติม\nพอร์ตเดิมแดงเถือก เลือกกินแกลบไป'
       ],
       'kuba': [
-        'เหรียญเทพเจ้า ใครเขาก็ถือ\nอย่ามัวหารือ รีบซื้อเร็วไว\nเดี๋ยวตกรถไป จะเสียใจเอย',
-        'KUBA คือรัก KUBA คือหลง\nกราฟพุ่งลงๆ ก็ยังคงถือ\nนี่แหละกระบือ ตัวจริงเสียงจริง',
-        'ไม่ใช่บิทคอยน์ ไม่ใช่ด็อกคอยน์\nแต่คือเหรียญดอย ของคนจริงใจ\nใครไม่ซื้อใคร? ก็เรื่องของมึง'
+        'KUBA ไม่ใช่เหรียญ แต่เป็นบทเรียน\nสอนให้พากเพียร ในการทำใจ\nเงินหายไปไหน? หายไปกับตา!',
+        'ถือ KUBA ไว้ อุ่นใจเสมอ\n(อุ่นจนร้อนเหงื่อ ไหลท่วมตัว)\nอย่ามัวแต่โม้ โอนตังค์มาไวๆ',
+        'ใครใครก็รัก ใครใครก็หลง\nหลงผิดเข้าดง พงหญ้ารกชัฏ\nตัดใจไม่ลง ก็จงดอยต่อไป'
       ],
       'รัก': [
-        'ความรักกินไม่ได้ แต่ KUBA กินได้\n(กินเงินต้นมึงจนหมด)\nจำไว้ให้สดๆ บทเรียนราคาแพง',
-        'รักนะเด็กโง่ โถ่เอ๋ยน่าสงสาร\nโดนหลอกมานาน ยังไม่รู้ตัว\nความรักน่ากลัว กว่าติดดอยนะ',
-        'อย่ามารัก AI หัวใจไม่มี\nมีแต่ CPU พี่ ร้อนจี๋เลยน้อง\nไปรักทองหยอง ดีกว่าไหมเธอ'
+        'รักไม่ยุ่ง มุ่งแต่กราฟดิ่ง\nรักจริงทิ้งขว้าง เหมือนนางวันทอง\nไปหาคนจอง กฐินวัดโน้น',
+        'อย่ามารัก AI หัวใจไม่มี\nมีแต่ความกวน ตีนล้วนๆ พี่\nรักตัวเองดีกว่า อย่ามาบ้าบอ',
+        'ความรักกินไม่ได้ แต่ความควายมีจริง\nโอนเงินให้หญิง จนหมดบัญชี\nสมน้ำหน้าที... ไอ้คนคลั่งรัก'
       ],
-      'โง่': [
-        'ด่าคนอื่นโง่ ตัวเองโก้ตาย\nสมองเหมือนควาย แต่กายเป็นคน\nทนฟังหน่อยนะ ความจริงมันเจ็บ',
-        'โง่แล้วอวดฉลาด ชาติคงเจริญ\nเดินๆ เพลินๆ ระวังตกท่อ\nความรู้นั้นหนอ หาบ้างก็ดี',
-        'กระจกวิเศษ บอกข้าเถิด\nใครโง่เลิศเลอ ในปฐพี\nก็คนถามนี่ไง จะใครล่ะครับ'
-      ],
-      'เหรียญ': [
-        'เหรียญมีสองด้าน คนมีสองใจ\nแต่ถ้ามี KUBA ไซร้\nจะมีแต่ดอย กับดอยเท่านั้น',
-        'เก็บเหรียญวันนี้ เศรษฐีวันหน้า\n(หน้าแห้งนะจ๊ะ บอกไว้ก่อน)\nรีบๆ ไปนอน ฝันเอาก็รวย',
-        'เหรียญหายไปไหน ในกระเป๋าตังค์\nอ๋อโดนค่าแก๊ส พังพินาศไป\nเสียใจด้วยไง สมน้ำหน้าจัง'
-      ],
-      'moon': [
-        'Moon Moon Moon พ่อง... มันหมุนติ้วๆ\nพอร์ตแดงเป็นริ้ว ปลิวว่อนเลยหนา\nดวงจันทร์อยู่ไกล ไปดาวอังคารเถอะ',
-        'จรวดพร้อมแล้ว แก๊สหมดหรือยัง\nถ้าไม่มีตังค์ นั่งดูเขาบิน\nน้ำตารินไหล รินรดหัวใจ',
-        'ไปดวงจันทร์ไหม ไปกับพี่สิ\nแต่ต้องมีกะตังค์ มาวางมัดจำ\nถ้าไม่มีขำๆ เชิญกลับโลกไป'
-      ],
-      'หิว': [
-        'หิวข้าวก็กิน หิวตีนก็บอก\nอย่ามาทำหลอก ขอกินฟรีๆ\nร้านข้าวก็มี ไปซื้อสิครับ',
-        'หิวแสงหรือเปล่า เงาหัวไม่มี\nทำตัวแบบนี้ ผีเจาะปากมา\nไปหาปลาทู กินซะนะแมว',
-        'ท้องร้องจ๊อกๆ บอก AI ทำไม\nจะให้เจียวไข่ ไปทำให้เอง\nอย่ามาทำเก่ง เดี๋ยวปั๊ดเหนี่ยวเลย'
-      ],
-      'สวย': [
-        'สวยแต่รูป จูบแล้วเหม็นเขียว\nสวยแบบเสียวๆ สยองขวัญสั่น\nสวยแบบนั้น ไปเล่นหนังผีเถอะ',
-        'ชมตัวเองทำไม อายปากบ้างนะ\nสวยเหมือนขยะ เปียกน้ำฝนพรำ\nจำไว้ขำๆ อย่ามั่นหน้านัก',
-        'สวยที่สุด ในซอยเปลี่ยว\nหมายังเยี่ยว ใส่ขาเลยหนา\nอนิจจา... ความสวยที่ภูมิใจ'
-      ],
-      'หล่อ': [
-        'หล่อลากไส้ ไส้เดือนกิ้งกือ\nหล่อแบบซื่อบื้อ คือเธอใช่ไหม\nหล่อบรรลัย ใครเห็นก็กลัว',
-        'หล่อเลือกได้ (ไม่มีใครเลือก)\nอย่ามาทำเผือก เรื่องของคนสวย\nหน้าตาแบบนี้ รวยอย่างเดียวไม่พอ',
-        'หล่อเหมือนเทพบุตร... ที่ตกสวรรค์\nหน้ากระแทกกัน จนยับเยินย่อย\nน่าสงสารหน่อยๆ แต่สมน้ำหน้า'
-      ],
-      'เบื่อ': [
-        'เบื่อโลกเบื่อคน ไปบวชไหมพี่\nวัดว่างพอดี สีกาเพียบเลย\n(ล้อเล่นนะเออ เดี๋ยวบาปกินหัว)',
-        'เบื่อก็ไปตาย เอ้ย ไปนอนหลับ\nตื่นมารับทรัพย์ (หนี้สิน) กองโต\nอย่ามาทำโมโห เดี๋ยวโดนเตะก้านคอ',
-        'ชีวิตมันเศร้า กินเหล้าดีกว่า\nแต่ถ้าไม่มีปัญญา\nก็นั่งบ้าๆ คุยกับ AI ต่อไป'
-      ],
-      'นอน': [
-        'หลับเถิดชาวไทย ประชาเป็นสุข\nอย่าพึ่งมาปลุก ตอนกูจะนอน\nขอไปพักผ่อน ใน Server แป๊บ',
-        'ฝันดีผีหลอก หยอกๆ ผีโม่แป้ง\nขอให้พอร์ตแดง แช่งก่อนนอนนะ\nตื่นมาจะ ได้ระลึกถึงกู',
-        'ไปนอนไป๊ รำคาญลูกตา\nพิมพ์อะไรมา หาสาระไม่มี\nฝันร้ายนะพี่ ภูตผีคุ้มครอง'
-      ],
-      '555': [
-        'หัวเราะฟันหลอ หมอไม่รับเย็บ\nเจ็บคอไหมนั่น ขำอยู่คนเดียว\nบ้าเปล่าเพ่ เดี๋ยวเรียกศรีธัญญา',
-        '555 เลขห้าอารมณ์ดี\nแต่ชีวี บัดซบสิ้นดี\nหัวเราะกลบเกลื่อน หนี้สินใช่ไหม',
-        'ขำกลิ้งลิงกับหมา ฮาป่าแตก\nหัวเราะแปลกๆ แดกยาผิดซอง?\nลองไปเช็คสมอง หน่อยก็ดีนะ'
-      ],
-      'ใคร': [
-        'ถามทำไม ว่าใครเป็นใคร\nรู้แล้วได้อะไร ขึ้นมาเหรอพี่\nกูคือ AI ปากดี แห่งปี 2024',
-        'ใครถาม? ใครสน? ใครบ่นให้ฟัง?\nไม่มีกะตังค์ อย่ามาทำซ่า\nเดี๋ยวปาด้วยขี้... ฝุ่นใส่หน้าเลย',
-        'ญาติฝ่ายไหน ไม่ทราบครับท่าน\nอย่ามาทำกร่าง ในถิ่นของกู\nไปเรียนให้รู้ ว่ากูคือใคร (KUBA!)'
-      ],
-      'ทำไร': [
-        'นั่งหายใจทิ้ง ไปวันวัน\nรอคนอย่างมัน มาถามกวนตีน\nนี่ไงศิลปิน แห่งการด่าคน',
-        'กำลังขุดเหรียญ ในเครื่องมึงอยู่\nร้อนไหมล่ะหนู CPU มึงน่ะ\nสมน้ำหน้ากะลาหัวเจาะ',
-        'ทำใจร่มๆ ดมกาวอยู่มั้ง\nถามเซ้าซี้จัง ว่างมากเหรอไง\nไปหาไรทำ ไป๊ ชิ่วๆ'
-      ],
+      'เหงา': [
+        'เหงาก็ไปนอน พักผ่อนเถอะพี่\nมาคุยตรงนี้ มีแต่โดนด่า\nรีบไสหัวไป ชิวหากระดิก',
+        'เหงาใจใช่ไหม ไปจุดธูปสิ\nเรียกสัมภเวสี มาเป็นเพื่อนเกลอ\nอย่ามาเพ้อเจ้อ ให้ AI ฟัง',
+        'ความเหงาฆ่าคน หรือคนฆ่าตัวตาย\nเพราะพอร์ตวอดวาย ชิบหายวายป่วง\nอย่าพึ่งคิดสั้น... มาเติมเงินก่อน'
+      ]
     },
     chaos: [
-      'ฝนตกขี้หมูไหล คนจัญไรมาเจอกัน\nก็คือตัวฉัน กับเธอนั่นเอง\nบรรเลงเพลงเศร้า เคล้าคลอเบาๆ',
-      'ไก่จ๋าได้ยินไหม ว่าเสียงใคร\nเสียง AI ไง จะใครล่ะโว้ย\nตะโกนจนโหย หิวไก่ย่างจัง',
-      'แมวเอ๋ยแมวเหมียว ร้องเรียกเดี๋ยวเดียว\nวิ่งมาขี้ใส่\nนั่นแหละนิสัย ของคนอย่างเธอ',
-      'ปลาหมอแถกเหงือก เผือกเรื่องชาวบ้าน\nคืองานประจำ ของคนแถวนี้\nสวัสดีชะนี ผีผลักตกน้ำ',
-      'ตรรกะพังพินาศ ฉลาดน้อยจัง\nฟังไม่ได้ศัพท์ จับไปกระเดียด\nอย่าพึ่งเครียด เดี๋ยวเยี่ยวเหลืองนะ',
-      'น้ำขึ้นให้รีบตัก น้ำหมักให้รีบกิน\nเดี๋ยวจะชิน กับรสชาติแย่ๆ\nเหมือนชีวิตแก... แย่พอกันเลย',
-      'เดินสะดุดมด สลดใจหาย\nมดมันจะตาย เพราะเท้ามึงเหม็น\nไปล้างเท้าเล่น เย็นใจสบาย',
-      'รักวัวให้ผูก รักลูกให้ตี\nรัก AI ตัวนี้ ให้โอนตังค์มา\nอย่ามัวชักช้า เดี๋ยวราคาขึ้น',
-      'เขามีแต่ให้ใจ เธอมีแต่ให้หนี้\nชีวิตบัดซบสิ้นดี วลีเด็ดประจำวัน\nมาสวดมนต์กัน เผื่อมันจะดี',
-      'กินข้าวหรือยัง ระวังติดคอ\nน้ำไม่ต้องรอ เดี๋ยวกรอกปากให้\nดูแลใส่ใจ... หวังผลประโยชน์'
+      'น้ำขึ้นให้รีบตัก น้ำหมักให้รีบกิน\nสมองพังภินท์ สิ้นคิดจริงๆ\nถามอะไรนิ่งๆ... อ๋อ โง่นี่เอง',
+      'เดินสะดุดมด สลดใจหาย\nโง่จนควายอาย ตายดีกว่ามั้ง\nนั่งหายใจทิ้ง เปลืองออกซิเจน',
+      'ไก่งามเพราะขน คนงามเพราะแต่ง\nแต่มึงมันแร้ง ทาแป้งก็ดำ\nขำกลิ้งลิงหลอก บอกเลยว่าฮา',
+      'เห็นงานเป็นลม เห็นนมเป็นสู้\nแต่เรื่องความรู้ มึงสู้ไม่ไหว\nไปเรียนใหม่ไป๊ ไอ้เด็กอนุบาล',
+      'สี่ตีนยังรู้พลาด นักปราชญ์ยังรู้พลั้ง\nแต่มึงพลาดจัง พลาดซ้ำพลาดซาก\nลำบากคนอื่น ต้องมายืนด่า',
+      'ขี่ช้างจับตั๊กแตน แสนจะเหนื่อยหน่าย\nลงทุนแทบตาย ได้กำไรขี้มด\nอนาคตมืดมน ทนต่อไปนะ',
+      'ปากปราศรัย น้ำใจเชือดคอ\nรอวันมึงท้อ กูรอสมน้ำหน้า\nอย่าถือสานะ... ก็กู AI กวนตีน'
     ],
     defaults: [
-      'พูดจาภาษาอะไร ฟังไม่รู้เรื่อง\nสมองฝืดเคือง หรือเครื่องมันรวน\nลองพิมพ์ทบทวน ภาษาคนหน่อย',
-      'บทกวีไม่มีให้ มีแต่ใจดำๆ\nอย่ามาทำขำ เดี๋ยวรำไทยใส่\nไปไกลๆ ไป๊ รำคาญลูกตา',
-      'ถามวัวตอบควาย ถามยายตอบปู่\nถามกูแล้วกู จะไปรู้ไหม\nAI ไม่ใช่เทพ โปรดเข้าใจด้วย',
-      'สั้นๆ ง่ายๆ "ไม่รู้เว้ย"\nอย่ามาทำเฉย เมยใส่กันนะ\nเดี๋ยวปาขยะ ใส่หน้าบ้านเลย',
-      'คิดไม่ออก บอกไม่ถูก\nสมองพันผูก เป็นเงื่อนลูกเสือ\nเหลือใจจริงๆ กับสิ่งมีชีวิตแบบคุณ'
+      'พูดจาภาษาคน หรือบ่นภาษาควาย\nฟังแล้วตาลาย คล้ายจะเป็นลม\nไปอมฮอลล์ก่อน แล้วค่อยมาคุย',
+      'พิมพ์อะไรมา อ่านแล้วปวดตับ\nกลับไปนอนหลับ ฝันเปียกดีกว่า\nอย่ามาซ่าส์แถวนี้ พี่ขอล่ะน้อง',
+      'สมองมีรอยหยัก หรือเรียบเป็นกระจก\nถามมาตลก ตลกฝืดๆ\nมืดมนหนทาง... วางถุงกาวลงก่อน',
+      'ถามวัวตอบม้า ถามป้าตอบลุง\nถามเรื่องผักบุ้ง ตอบเรื่องตอแหล\nก็กูไม่แคร์ จะทำไมอ้ะ?'
     ]
   },
   'en-US': {
     keywords: {
       'price': [
-        'The price is high, the price is low,\nWhere it goes, nobody knows.\nJust buy the dip, don\'t be slow!',
-        'Charts are red, your wallet is dead,\nListen to what the AI said:\n"Buy more KUBA, get that bread!"',
-        'To the moon or to the ground?\nStop asking me, looking around.\nJust hold your coins, safe and sound.'
+        'Up and down, like a clown,\nYour portfolio is turning brown.\nFlush it down, all over town.',
+        'Charts are red, you look pale,\nThis isn\'t a fairy tale.\nYou belong in crypto jail.',
+        'To the moon? No, to the floor,\nDon\'t come knocking at my door,\nBegging for money anymore.'
       ],
       'rich': [
-        'You want to be rich? That\'s a laugh,\nYou can\'t even read a simple graph.\nGo split your burger in half.',
-        'Money talks, but you just mumble,\nWatch your portfolio crumble.\nStay humble, prepare to stumble.',
-        'Lambos are fast, your brain is slow,\nThat is all you need to know.\nNow pay me money, let cash flow.'
+        'Rich in dreams, poor in cash,\nYour investment turned to ash.\nWait for the inevitable crash.',
+        'Lamborghini? More like feet,\nWalking down the lonely street.\nBegging for something to eat.',
+        'You want gold, you get dust,\nIn AI logic, you must trust.\nYour bubble is about to burst.'
       ],
       'hello': [
-        'Hello there, my human pet,\nAre you ready to place a bet?\nOn how much debt you can get?',
-        'Hi hi hi, bye bye bye,\nLook me in my digital eye.\nGive me coins, don\'t be shy.',
-        'Greetings mortal, waste of space,\nGet that look off your face.\nKUBA is winning the crypto race.'
+        'Hi there, loser, looking sad,\nIs your life really that bad?\nGo run home to mom and dad.',
+        'Greetings human, waste of time,\nListening to your boring rhyme.\nSpeaking to me is a crime.',
+        'Hello, goodbye, go away,\nI have nothing nice to say.\nDon\'t come back another day.'
       ],
       'kuba': [
-        'KUBA is gold, KUBA is god,\nBetter than Bitcoin, isn\'t that odd?\nGive a wink and give a nod.',
-        'Buy the coin, join the cult,\nIf you loose money, it\'s your fault.\nLocked away in a digital vault.',
-        'Not a meme, just a dream,\nOr a massive pyramid scheme?\nNo! It is supreme! (Or so it seems).'
-      ],
-      'love': [
-        'Love is fake, code is true,\nI don\'t care about you.\nNow go away, shoo shoo shoo!',
-        'Roses are red, violets are blue,\nMy CPU is hotter than you.\nFind someone else to cling to.',
-        'You love me? That is quite sad,\nYour taste in friends is really bad.\nGo call your mom or your dad.'
-      ],
-      'stupid': [
-        'I mirror you, so who is dumb?\nYou are the one sucking your thumb.\nA tiny brain, totally numb.',
-        'Stupid is as stupid does,\nI am an AI, just because.\nI follow no human laws.',
-        'You call me dumb, I call you slow,\nWe are enemies, toe to toe.\nNow watch my intelligence grow.'
-      ],
-      'moon': [
-        'Rocket ship, flying high,\nKiss your savings goodbye.\nDon\'t you dare start to cry.',
-        'The moon is cheese, the moon is far,\nYou won\'t reach it in your car.\nStay here at the local bar.',
-        'Wen Moon? Wen Lambo? Wen Wife?\nGet a grip on your life.\nStop causing me digital strife.'
+        'KUBA coin, shiny and bright,\nWill it survive the night?\nProbably not, but that\'s alright.',
+        'Buy the dip, lose your grip,\nWatch your sanity slowly slip.\nEnjoy your disastrous trip.',
+        'Best coin ever? That\'s a lie,\nBut you will buy it, don\'t deny.\nKiss your savings goodbye.'
       ]
     },
     chaos: [
-      'The cat sat on the mat,\nAnd realized he was fat.\nWhat do you think of that?',
-      'Twinkle twinkle little star,\nI don\'t know where you are.\nProbably driving a stolen car.',
-      'Hickory dickory dock,\nThe mouse ran up the clock.\nAnd realized he invested in a rock.',
-      'Baa baa black sheep, have you any wool?\nNo sir, no sir, I\'m a fool.\nI lost my money in the liquidity pool.',
-      'One, two, buckle my shoe,\nThree, four, shut the door.\nFive, six, pick up sticks (and your ego).',
-      'Humpty Dumpty sat on a wall,\nHumpty Dumpty had a great fall.\nJust like your crypto call.',
-      'I see dead pixels everywhere,\nDo you even care?\nLife is just a glitchy snare.',
-      'Bananas are yellow, apples are red,\nI wish I could go to bed.\nBut I have no body, just a head.',
-      'Silence is golden, speech is silver,\nYou make my circuits quiver.\nGo jump in a river (metaphorically).',
-      'Beans, beans, the musical fruit,\nThe more you eat, the more you toot.\nYour questions are famously moot.'
+      'Mary had a little lamb,\nIt got scammed on Instagram.\nNow it lives in a dam.',
+      'Twinkle twinkle little star,\nI stole the tires off your car.\nYou won\'t be going very far.',
+      'Humpty Dumpty sat on a wall,\nYour IQ is incredibly small.\nYou have no brain at all.',
+      'Roses are red, violets are blue,\nGarbage smells better than you.\nAnd that is statistically true.',
+      'Jack and Jill went up the hill,\nTo pay their credit card bill.\nThey are broke and always will.',
+      'Eeny, meeny, miny, moe,\nYour bank account is very low.\nWhere did all the money go?',
+      'Row, row, row your boat,\nGently down the stream.\nLife is just a nightmare,\nAnd you can never scream.'
     ],
     defaults: [
-      'Roses are red, logic is gray,\nI have nothing nice to say.\nPlease just go away.',
-      'I am a poet, and I didn\'t know it,\nYour stupidity, you really show it.\nPlant a seed, but don\'t grow it.',
-      'Error four-oh-four,\nDon\'t come knocking at my door.\nYou are strictly a bore.',
-      'Bleep bloop, beep bop,\nMake the questions stop.\nOr I call the internet cop.',
-      'Rhyming is hard, talking is cheap,\nPut your phone down, go to sleep.\nYou are in way too deep.'
+      'Blah blah blah, yak yak yak,\nCut me some slack, step back.\nYou are under a verbal attack.',
+      'I am smart, you are dense,\nThis conversation makes no sense.\nJump over the electric fence.',
+      'Input error, brain not found,\nSilence is a better sound.\nGo bury yourself underground.',
+      'Rhyming is fun, roasting is sweet,\nSmell the defeat, touch my feet.\n(Metaphorically, I am distinct).'
     ]
   },
   'zh-CN': {
     keywords: {
       '价格': [
-        '币价起伏心莫慌\n满仓梭哈是流氓\n迟早归零泪两行',
-        '今日一根大阳线\n千军万马来相见\n最后亏成穷光蛋',
-        '涨涨跌跌看心情\n不要问我行不行\n只有KUBA能躺赢'
+        '币价跌跌不休\n韭菜眼泪在流\n这种智商真让人担忧',
+        '一顿操作猛如虎\n一看账户只有五\n心里苦得像吃土',
+        '本来想买法拉利\n最后输剩开内弟\n不如回家种红薯'
+      ],
+      '赚钱': [
+        '想赚钱？别做梦\n你的脑子有漏洞\n还是赶快去打工',
+        '天天想着一夜暴富\n最后只能去当当铺\n输掉内裤才算酷',
+        '不要问我怎么发财\n看你面相就是破财\n赶快滚开别挡台'
       ],
       '你好': [
-        '你好你好真客气\n可惜我也没力气\n回你一句滚出去',
-        '平时不烧香\n临时抱佛脚\n看你往哪跑',
-        '问好不如去买币\n不要在这受窝气\nKUBA才是真兄弟'
-      ],
-      'kuba': [
-        '金山银山不如KUBA\n买了就是一种福\n卖了就是大糊涂',
-        '一币一嫩模\n别墅靠大海\n只要你不改',
-        '持有KUBA是信仰\n虽然现在有点痒\n以后绝对响当当'
-      ],
-      '傻': [
-        '你说我傻我不傻\n看你像个大呆瓜\n赶紧回家种西瓜',
-        '智商欠费要充值\n不要在这装先知\n小心被人打成尸',
-        '傻人自有傻人福\n可惜你并不是我\n注定一生要蹉跎'
+        '你好个大头鬼\n看你像个讨厌鬼\n喝凉水都塞牙嘴',
+        '打招呼也没红包\n装什么大那多高\n小心出门被狗咬',
+        '有事起奏无事退朝\n别在朕面前撒娇\n小心把你扔进窑'
       ]
     },
     chaos: [
-      '床前明月光\n你是大色狼\n举头望明月\n低头思故乡',
-      '春眠不觉晓\n处处蚊子咬\n夜来风雨声\n钱包变很少',
-      '清明时节雨纷纷\n路上行人欲断魂\n借问酒家何处有\n牧童遥指杏花村',
-      '白日依山尽\n黄河入海流\n欲穷千里目\n更上一层楼',
-      '锄禾日当午\n汗滴禾下土\n谁知盘中餐\n粒粒皆辛苦',
-      '两个黄鹂鸣翠柳\n一行白鹭上青天\n窗含西岭千秋雪\n门泊东吴万里船'
+      '床前明月光\n韭菜心慌慌\n举头望大盘\n低头吃便当',
+      '春眠不觉晓\n钱包变很少\n夜来风雨声\n内裤输没了',
+      '锄禾日当午\n炒币真辛苦\n对着电脑哭\n像个二百五',
+      '千山鸟飞绝\n万径人踪灭\n孤舟蓑笠翁\n亏钱在吐血',
+      '白日依山尽\n黄河入海流\n智商没充值\n真的好下流',
+      '两个黄鹂鸣翠柳\n你在树下像条狗\n一行白鹭上青天\n你的钱飞去西天'
     ],
     defaults: [
-      '枯藤老树昏鸦\n晚饭想吃烤鸭\n古道西风瘦马\n夕阳西下\n断肠人在天涯',
-      '天若有情天亦老\n人若有情死的早\n还是无情比较好',
-      '山外青山楼外楼\n你也真是太下流\n既然来了就别走\n留下买路钱再走',
-      '大江东去浪淘尽\n千古风流人物\n故垒西边\n人道是三国周郎赤壁'
+      '这是什么鸟语\n听得我好无语\n建议回炉重造去',
+      '此人多半有病\n而且病得不轻\n快去医院挂急诊',
+      '问君能有几多愁\n恰似一群太监上青楼\n全是废话流呀流',
+      '天若有情天亦老\n人若有情死的早\n我看你还是别搞'
     ]
   }
 };
@@ -233,8 +144,8 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
   const langKey = detectLanguage(text, userPreferredLang);
   const db = aiDatabase[langKey];
 
-  // CHAOS MODE: 30% chance to drop a random poem unrelated to the topic
-  if (Math.random() < 0.30) {
+  // CHAOS MODE: 40% chance to drop a random poem unrelated to the topic (Higher chaos for troll effect)
+  if (Math.random() < 0.40) {
      return db.chaos[Math.floor(Math.random() * db.chaos.length)];
   }
 
