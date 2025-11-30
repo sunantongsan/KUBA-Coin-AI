@@ -1,29 +1,38 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-const ADGEM_POSTBACK_KEY = "h2j5bd7989nb1g3j03ea0d1k";
+import { ADGEM_BANNED_SECRET } from '../../constants';
+import { banUser } from '../../services/kv';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { user_id, reason, verifier } = req.query;
+  // AdGem Banned Webhook
+  const { user_id, reason, secret } = req.query; // Check if AdGem sends secret in query or headers
 
-  console.log(`[AdGem Ban] Alert for User=${user_id}, Reason=${reason}`);
+  // Note: AdGem might pass the secret in a custom way. 
+  // We assume here it's passed as a query param or we validate against the known secret logic.
+  
+  // If your configured webhook URL includes the secret, you can validate it here.
+  // URL: .../api/adgem/banned?secret=5lblnajen32hid6095ad8hdl
+  
+  const providedSecret = secret || req.headers['x-adgem-secret'];
+
+  if (providedSecret !== ADGEM_BANNED_SECRET && req.query.webhook_secret !== ADGEM_BANNED_SECRET) {
+      // Loose check for query param "webhook_secret" just in case user set it there
+      console.error("[AdGem Ban] Invalid Secret");
+      return res.status(403).send("Forbidden");
+  }
 
   if (!user_id) {
     return res.status(400).send("Missing user_id");
   }
 
-  // Security Check (Optional but recommended)
-  // ... implementation similar to callback.ts
+  const uId = Array.isArray(user_id) ? user_id[0] : user_id;
+  const reasonStr = Array.isArray(reason) ? reason[0] : (reason || 'Unknown');
 
-  try {
-    // IN REAL PRODUCTION: Mark user as banned in Database
-    // await db.users.updateOne({ telegram_id: user_id }, { $set: { isBanned: true } });
-    
-    console.log(`[AdGem Ban] User ${user_id} has been processed for banning.`);
+  const success = await banUser(uId, reasonStr as string);
 
+  if (success) {
     return res.status(200).send("1");
-  } catch (error) {
-    console.error("[AdGem Ban Error]", error);
+  } else {
     return res.status(500).send("0");
   }
 }

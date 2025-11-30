@@ -28,31 +28,22 @@ export const useAppContext = () => {
 // Component to handle redirection on startup
 const StartupRedirect = () => {
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    // Always redirect to home when the app mounts (fresh load or refresh)
-    navigate('/');
-  }, []); // Empty dependency array ensures this runs only once on mount
-
+  useEffect(() => { navigate('/'); }, []);
   return null;
 };
 
 const App: React.FC = () => {
-  // Initialize State with Telegram User Detection
+  // Initialize State
   const [state, setState] = useState<AppState>(() => {
     const today = new Date().toDateString();
     
-    // 1. Try to get Telegram User Data
+    // 1. Get User ID
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    const userId = tgUser?.id || null; // Null if running in browser/testing
-    
-    // 2. Define LocalStorage Key based on User ID (supports multi-user on same device if needed)
+    const userId = tgUser?.id || null;
     const storageKey = userId ? `kuba_data_v1_${userId}` : 'kuba_data_v1_guest';
 
-    // 3. Load previous data
+    // 2. Load Local Data
     const saved = localStorage.getItem(storageKey);
-    
-    // Default fresh state
     const defaultState: AppState = {
       telegramUserId: userId,
       telegramUsername: tgUser?.username || tgUser?.first_name || 'Guest',
@@ -65,25 +56,51 @@ const App: React.FC = () => {
 
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Merge saved data with current user info (in case username changed)
       const mergedState = { ...parsed, telegramUserId: userId, telegramUsername: defaultState.telegramUsername };
-
-      // Daily Reset Logic
       if (parsed.lastResetDate !== today) {
-        return { 
-          ...mergedState, 
-          dailyQuota: INITIAL_QUOTA, 
-          lastResetDate: today, 
-          hasSeenAdToday: false 
-        };
+        return { ...mergedState, dailyQuota: INITIAL_QUOTA, lastResetDate: today, hasSeenAdToday: false };
       }
       return mergedState;
     }
-    
     return defaultState;
   });
 
-  // Persist State whenever it changes
+  // Sync with Server (Vercel KV) on Mount
+  useEffect(() => {
+    const syncWithServer = async () => {
+      if (!state.telegramUserId) return;
+
+      try {
+        const response = await fetch(`/api/user/sync?user_id=${state.telegramUserId}`);
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.isBanned) {
+            alert("🚫 Your account has been banned for suspicious activity.");
+            // Handle ban logic (e.g., disable interactions)
+          }
+
+          // If server balance is higher (due to AdGem rewards), update local state
+          setState(prev => {
+             // We prioritize server balance ONLY if it's an update from Offerwall.
+             // Since this is a simple example, we simply ADD the server balance to local 
+             // or replace if implementation logic dictates. 
+             // To keep it simple: Use the server balance if it's non-zero and greater than local.
+             if (data.balance > prev.balance) {
+               return { ...prev, balance: data.balance };
+             }
+             return prev;
+          });
+        }
+      } catch (e) {
+        console.error("Sync failed", e);
+      }
+    };
+
+    syncWithServer();
+  }, [state.telegramUserId]);
+
+  // Persist State
   useEffect(() => {
     const storageKey = state.telegramUserId ? `kuba_data_v1_${state.telegramUserId}` : 'kuba_data_v1_guest';
     localStorage.setItem(storageKey, JSON.stringify(state));
