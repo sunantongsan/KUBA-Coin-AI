@@ -109,16 +109,18 @@ const Chat: React.FC = () => {
     });
   };
 
-  const handleFeedback = (msgId: string, type: 'up' | 'down') => {
+  const handleFeedback = async (msgId: string, type: 'up' | 'down') => {
+    // 1. Find the target message and update UI optimistically
+    let targetMsg: ChatMessage | undefined;
+    let associatedPrompt = "Unknown context";
+
     setMessages(prevMessages => {
-      // 1. Find the AI message being rated
       const targetIndex = prevMessages.findIndex(m => m.id === msgId);
       if (targetIndex === -1) return prevMessages;
 
-      const targetMsg = prevMessages[targetIndex];
+      targetMsg = prevMessages[targetIndex];
 
-      // 2. Find the associated user prompt (look backwards from this message)
-      let associatedPrompt = "Unknown context";
+      // Find the associated user prompt (look backwards)
       for (let i = targetIndex - 1; i >= 0; i--) {
         if (prevMessages[i].role === 'user') {
           associatedPrompt = prevMessages[i].text;
@@ -126,35 +128,44 @@ const Chat: React.FC = () => {
         }
       }
 
-      // 3. Create the robust log entry
-      const logEntry = {
-        id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-        timestamp: new Date().toISOString(),
-        userId: state.telegramUserId,
-        language: state.language,
-        data: {
-          prompt: associatedPrompt,
-          response: targetMsg.text,
-          feedback: type
-        }
-      };
-      
-      // 4. Save to localStorage
-      try {
-        const STORAGE_KEY = 'kuba_ai_training_data';
-        const existingLogs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        const updatedLogs = [...existingLogs, logEntry];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLogs));
-        console.log("Training data saved:", logEntry);
-      } catch (e) {
-        console.error("Failed to save feedback log", e);
-      }
-
-      // 5. Update UI state
       return prevMessages.map(msg =>
         msg.id === msgId ? { ...msg, feedback: type } : msg
       );
     });
+
+    if (!targetMsg) return;
+
+    // 2. Prepare payload
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      userId: state.telegramUserId,
+      language: state.language,
+      data: {
+        prompt: associatedPrompt,
+        response: targetMsg.text,
+        feedback: type
+      }
+    };
+
+    // 3. Send to Server API
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(logEntry),
+      });
+      console.log("Feedback sent to server");
+    } catch (e) {
+      console.error("Failed to send feedback", e);
+      // Fallback: Store in localStorage if API fails
+      try {
+         const STORAGE_KEY = 'kuba_ai_training_data_offline';
+         const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+         localStorage.setItem(STORAGE_KEY, JSON.stringify([...existing, logEntry]));
+      } catch (err) { /* ignore */ }
+    }
   };
 
   // Helper to determine chaotic style features based on ID
