@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -17,7 +16,6 @@ interface AppContextType {
   addQuota: () => void;
   setLanguage: (lang: string) => void;
   setSelectedVoice: (voice: string) => void;
-  setSoundMode: (mode: 'off' | 'comedy' | 'cartoon' | 'game' | 'laughter') => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -55,8 +53,7 @@ const App: React.FC = () => {
       lastResetDate: today,
       hasSeenAdToday: false,
       language: tgUser?.language_code || navigator.language || 'en-US',
-      selectedVoice: 'Puck', // Default Voice
-      soundMode: 'comedy' // Default Sound Mode (90s Style)
+      selectedVoice: 'Puck' // Default Voice
     };
 
     if (saved) {
@@ -64,7 +61,6 @@ const App: React.FC = () => {
       const mergedState = { ...parsed, telegramUserId: userId, telegramUsername: defaultState.telegramUsername };
       // Ensure new fields exist if loading old state
       if (!mergedState.selectedVoice) mergedState.selectedVoice = 'Puck';
-      if (!mergedState.soundMode) mergedState.soundMode = 'comedy';
       
       if (parsed.lastResetDate !== today) {
         return { ...mergedState, dailyQuota: INITIAL_QUOTA, lastResetDate: today, hasSeenAdToday: false };
@@ -132,12 +128,8 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, selectedVoice: voice }));
   };
 
-  const setSoundMode = (mode: 'off' | 'comedy' | 'cartoon' | 'game' | 'laughter') => {
-    setState(prev => ({ ...prev, soundMode: mode }));
-  };
-
   return (
-    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage, setSelectedVoice, setSoundMode }}>
+    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage, setSelectedVoice }}>
       <HashRouter>
         <StartupRedirect />
         <Layout>

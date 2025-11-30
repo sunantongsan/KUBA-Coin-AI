@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,82 +7,10 @@
     <title>KUBA Coin AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>
-      // Robust Polyfill for CloudStorage on Telegram < 6.9
-      // Fixes "CloudStorage not supported" and "Cannot assign to read only property" errors
-      (function() {
-        try {
-          if (window.Telegram && window.Telegram.WebApp) {
-            var wa = window.Telegram.WebApp;
-            var needsPolyfill = false;
-            
-            // Check version safely
-            if (wa.isVersionAtLeast) {
-                if (!wa.isVersionAtLeast('6.9')) needsPolyfill = true;
-            } else {
-                needsPolyfill = true; // v6.0 or older
-            }
-
-            if (needsPolyfill) {
-              console.log("Applying CloudStorage Polyfill for older Telegram version");
-              var ls = {
-                getItem: function(k, cb) { cb && cb(null, localStorage.getItem(k)); },
-                setItem: function(k, v, cb) { localStorage.setItem(k, v); cb && cb(null, true); },
-                getItems: function(keys, cb) { 
-                  var res = {}; 
-                  keys.forEach(function(k) { res[k] = localStorage.getItem(k); }); 
-                  cb && cb(null, res); 
-                },
-                removeItem: function(k, cb) { localStorage.removeItem(k); cb && cb(null, true); },
-                removeItems: function(keys, cb) { 
-                  keys.forEach(function(k) { localStorage.removeItem(k); }); 
-                  cb && cb(null, true); 
-                },
-                getKeys: function(cb) { cb && cb(null, Object.keys(localStorage)); }
-              };
-              
-              // Attempt 1: Define Property (Preferred)
-              var defined = false;
-              try {
-                Object.defineProperty(wa, 'CloudStorage', {
-                  value: ls,
-                  writable: true,
-                  configurable: true
-                });
-                defined = true;
-              } catch (e) {
-                // console.warn("DefineProperty failed:", e);
-              }
-
-              // Attempt 2: Proxy Override (Fallback if object is sealed/frozen)
-              if (!defined && window.Proxy) {
-                try {
-                   var proxy = new Proxy(wa, {
-                      get: function(target, prop) {
-                          if (prop === 'CloudStorage') return ls;
-                          var val = target[prop];
-                          // Bind functions to the original target to preserve 'this' context
-                          if (typeof val === 'function') return val.bind(target);
-                          return val;
-                      }
-                   });
-                   window.Telegram.WebApp = proxy;
-                   console.log("CloudStorage Polyfill applied via Proxy");
-                } catch(proxyErr) {
-                   console.warn("Polyfill Proxy failed", proxyErr);
-                }
-              }
-            }
-          }
-        } catch (e) {
-           console.warn("Polyfill initialization error", e);
-        }
-      })();
-    </script>
+    <!-- Adsgram Script for Video Ads -->
+    <script src="https://adsgram.ai/js/adsgram.js"></script>
     <!-- HTML2Canvas for Screenshots -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <!-- Monetag/Ad SDK (Interstitial/Vignette) -->
-    <script src="https://libtl.com/sdk.js" data-zone="10194784" data-sdk="show_10194784"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -164,6 +93,7 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>

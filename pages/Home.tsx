@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../App';
@@ -16,8 +17,8 @@ const Home: React.FC = () => {
   }, []);
 
   const handleEarnClick = () => {
-    // Use Telegram Native Link Opener if available (v6.4+), else window.open
-    if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
+    // Use Telegram Native Link Opener if available
+    if (window.Telegram?.WebApp?.openLink) {
       window.Telegram.WebApp.openLink(AD_URL, { try_instant_view: false });
     } else {
       window.open(AD_URL, '_blank', 'noopener,noreferrer');

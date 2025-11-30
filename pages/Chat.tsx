@@ -1,13 +1,13 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
 import { generateTrollResponse, generateSpeech } from '../services/geminiService';
-import { playSoundEffect } from '../services/audioEffects'; // Import Sound FX Engine
 import { ChatMessage } from '../types';
-import { MONETAG_DIRECT_LINK, INTERACTION_REWARD, TELEGRAM_BOT_USERNAME, AD_REWARD_QUOTA } from '../constants';
+import { AD_URL, INTERACTION_REWARD, ADSGRAM_BLOCK_ID, TELEGRAM_BOT_USERNAME } from '../constants';
 
 const Chat: React.FC = () => {
-  const { state, decrementQuota, addQuota, incrementBalance, setSelectedVoice, setSoundMode } = useAppContext();
+  const { state, decrementQuota, addQuota, incrementBalance, setSelectedVoice } = useAppContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -24,19 +24,10 @@ const Chat: React.FC = () => {
 
   // 90s Thai Comedian Voice Options
   const voiceOptions = [
-    { id: 'Puck', name: 'Nong Joke', desc: 'Energetic & Prankster', icon: '🤪', color: 'bg-yellow-500' },
-    { id: 'Fenrir', name: 'Uncle Kom', desc: 'Deep, Raspy & Aggressive', icon: '🤬', color: 'bg-red-700' },
+    { id: 'Puck', name: 'Nong Joke', desc: 'Energetic & Prankster (High Energy)', icon: '🤪', color: 'bg-yellow-500' },
+    { id: 'Fenrir', name: 'Uncle Kom', desc: 'Deep, Raspy & Aggressive (Hard Roast)', icon: '🤬', color: 'bg-red-700' },
     { id: 'Charon', name: 'Boss Thep', desc: 'Serious, Deep & Deadpan', icon: '🕶️', color: 'bg-blue-900' },
     { id: 'Zephyr', name: 'Je Mam', desc: 'Sassy, Fast & High-pitched', icon: '💃', color: 'bg-pink-500' },
-  ];
-
-  // Sound Effect Modes
-  const sfxOptions = [
-    { id: 'comedy', name: '90s Comedy', desc: '"Tung Poh!" Drum', icon: '🥁' },
-    { id: 'cartoon', name: 'Cartoon', desc: '"Boing" & "Slips"', icon: '🪀' },
-    { id: 'laughter', name: 'Sitcom', desc: '"Ha Ha Ha" FX', icon: '😆' },
-    { id: 'game', name: 'Retro Game', desc: '8-bit Pings', icon: '👾' },
-    { id: 'off', name: 'No Effects', desc: 'Just Silence', icon: '🔇' },
   ];
 
   const scrollToBottom = () => {
@@ -155,9 +146,7 @@ const Chat: React.FC = () => {
         setMessages(prev => [...prev, aiMsg]);
         incrementBalance(INTERACTION_REWARD);
 
-        // Play SFX & Speech
         if (isSoundEnabled) {
-          playSoundEffect(state.soundMode);
           playTextToSpeech(responseText);
         }
     } catch (error) {
@@ -215,9 +204,7 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, aiMsg]);
       incrementBalance(INTERACTION_REWARD);
 
-      // Play SFX & Speech
       if (isSoundEnabled) {
-        playSoundEffect(state.soundMode);
         playTextToSpeech(responseText);
       }
       
@@ -233,7 +220,6 @@ const Chat: React.FC = () => {
         };
         setMessages(prev => [...prev, aiMsg]);
         incrementBalance(INTERACTION_REWARD);
-        if (isSoundEnabled) playSoundEffect(state.soundMode);
       } catch (localError) {
         console.error("Critical Failure", localError);
       }
@@ -255,29 +241,35 @@ const Chat: React.FC = () => {
   };
 
   const handleWatchAd = async () => {
-    // Monetag Direct Link Implementation
-    if (window.confirm("Quota หมดแล้วจ้า! ไปดูโฆษณาแก้เซ็งสักแป๊บมั้ย? (Open Ad Link to get +3 Chats)")) {
-      
-      // Use Telegram's openLink for better compatibility (requires v6.4+), fallback to window.open
-      if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
-        window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
-      } else {
-        window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
-      }
+    if (window.Adsgram) {
+      try {
+        const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+        const result = await AdController.show();
 
-      // Simulate reward grant logic
-      setIsLoading(true);
+        if (result.done) {
+          addQuota();
+          alert("Success! +2 Chats added. 📺✅");
+        } else {
+          alert("Ad skipped or failed. No quota added.");
+        }
+      } catch (error) {
+        fallbackAd();
+      }
+    } else {
+      fallbackAd();
+    }
+  };
+
+  const fallbackAd = () => {
+    if (window.confirm("Video Ad unavailable. Open partner link instead for +2 chats?")) {
+      if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(AD_URL, { try_instant_view: false });
+      } else {
+        window.open(AD_URL, '_blank', 'noopener,noreferrer');
+      }
       setTimeout(() => {
         addQuota();
-        setIsLoading(false);
-        playSoundEffect('game'); // Success Sound
-        // Show success message
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'model',
-          text: `เยี่ยมมากไอ้ทิด! ได้โควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้งแล้ว\n(Great job! Quota replenished.)`,
-          timestamp: Date.now()
-        }]);
+        alert("Thanks! +2 Quota added.");
       }, 3000);
     }
   };
@@ -287,20 +279,17 @@ const Chat: React.FC = () => {
     const shareText = "This KUBA AI is roasting me in poems! 🤣 Come earn coins.";
     const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`;
 
-    // openTelegramLink requires v6.4+
-    if (window.Telegram?.WebApp?.openTelegramLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
+    if (window.Telegram?.WebApp?.openTelegramLink) {
         window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
     } else {
         window.open(telegramShareUrl, '_blank');
     }
     incrementBalance(100);
-    playSoundEffect('game');
   };
 
   const handleSnapshot = async () => {
     if (!chatContainerRef.current || !window.html2canvas) return;
     try {
-      playSoundEffect('cartoon');
       const canvas = await window.html2canvas(chatContainerRef.current, {
         backgroundColor: '#1a1a1a',
         ignoreElements: (element) => element.tagName === 'BUTTON' || element.tagName === 'INPUT'
@@ -316,7 +305,6 @@ const Chat: React.FC = () => {
 
   const handleFeedback = async (msgId: string, type: 'up' | 'down') => {
     setMessages(prev => prev.map(msg => msg.id === msgId ? { ...msg, feedback: type } : msg));
-    playSoundEffect('cartoon');
     try {
         await fetch('/api/feedback', {
             method: 'POST',
@@ -335,74 +323,42 @@ const Chat: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
-      {/* Studio Settings Modal (Voice & Sound) */}
+      {/* Voice Selection Modal */}
       {showVoiceModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 border-2 border-kuba-yellow rounded-2xl p-6 w-full max-w-sm relative shadow-2xl animate-bounce-slow max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-900 border-2 border-kuba-yellow rounded-2xl p-6 w-full max-w-sm relative shadow-2xl animate-bounce-slow">
             <button 
               onClick={() => setShowVoiceModal(false)}
               className="absolute top-2 right-2 text-gray-400 hover:text-white text-xl"
             >
               ✕
             </button>
-            <h3 className="text-xl font-black text-kuba-yellow uppercase text-center mb-4 tracking-wider border-b border-gray-700 pb-2">
-              🎙️ Studio Settings
+            <h3 className="text-xl font-black text-kuba-yellow uppercase text-center mb-4 tracking-wider">
+              🎭 Select Comedian Voice
             </h3>
-            
-            {/* Voice Selection */}
-            <div className="mb-6">
-              <h4 className="text-white font-bold mb-2 text-sm uppercase">1. Choose Persona</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {voiceOptions.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => {
-                      setSelectedVoice(v.id);
-                      playTextToSpeech("Test 1, 2, 3... Ha ha ha!");
-                    }}
-                    className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all active:scale-95 ${
-                      state.selectedVoice === v.id 
-                        ? 'border-white bg-kuba-yellow text-black shadow-[0_0_15px_gold]' 
-                        : 'border-gray-700 bg-gray-800 text-gray-300'
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-full ${v.color} flex items-center justify-center text-lg mb-1 shadow-inner border border-black/20`}>
-                      {v.icon}
-                    </div>
-                    <span className="font-bold text-xs">{v.name}</span>
-                  </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              {voiceOptions.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => {
+                    setSelectedVoice(v.id);
+                    setShowVoiceModal(false);
+                    playTextToSpeech("Test 1, 2, 3... Ha ha ha!");
+                  }}
+                  className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all active:scale-95 ${
+                    state.selectedVoice === v.id 
+                      ? 'border-white bg-kuba-yellow text-black shadow-[0_0_15px_gold]' 
+                      : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-500'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-full ${v.color} flex items-center justify-center text-2xl mb-2 shadow-inner border border-black/20`}>
+                    {v.icon}
+                  </div>
+                  <span className="font-bold text-sm">{v.name}</span>
+                  <span className="text-[10px] text-center opacity-80 leading-tight mt-1">{v.desc}</span>
+                </button>
+              ))}
             </div>
-
-            {/* Sound Effect Selection */}
-            <div>
-              <h4 className="text-white font-bold mb-2 text-sm uppercase">2. Sound Effects</h4>
-              <div className="space-y-2">
-                {sfxOptions.map((sfx) => (
-                   <button
-                    key={sfx.id}
-                    onClick={() => {
-                      setSoundMode(sfx.id as any);
-                      playSoundEffect(sfx.id);
-                    }}
-                    className={`w-full flex items-center p-3 rounded-lg border transition-all ${
-                      state.soundMode === sfx.id 
-                        ? 'bg-blue-900 border-blue-400 text-white' 
-                        : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-750'
-                    }`}
-                   >
-                     <span className="text-xl mr-3">{sfx.icon}</span>
-                     <div className="flex flex-col text-left">
-                       <span className="font-bold text-sm">{sfx.name}</span>
-                       <span className="text-[10px] opacity-70">{sfx.desc}</span>
-                     </div>
-                     {state.soundMode === sfx.id && <span className="ml-auto text-green-400 font-bold">✓</span>}
-                   </button>
-                ))}
-              </div>
-            </div>
-
           </div>
         </div>
       )}
@@ -413,7 +369,7 @@ const Chat: React.FC = () => {
           <span className="text-gray-400 font-mono">QUOTA: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
         </div>
         
-        {/* Voice/Sound Settings Toggle */}
+        {/* Voice Toggle */}
         <div className="flex bg-gray-700 rounded-lg p-1 gap-1">
           <button 
             onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
@@ -425,14 +381,15 @@ const Chat: React.FC = () => {
           >
             {isSoundEnabled ? '🔊' : '🔇'}
           </button>
-          
-           <button 
-              onClick={() => setShowVoiceModal(true)}
-              className="p-2 rounded-md bg-gray-600 text-white text-xs hover:bg-gray-500 active:scale-90 flex items-center gap-1"
-              title="Studio Settings"
-           >
-              <span>⚙️</span>
-           </button>
+          {isSoundEnabled && (
+             <button 
+                onClick={() => setShowVoiceModal(true)}
+                className="p-2 rounded-md bg-gray-600 text-white text-xs hover:bg-gray-500 active:scale-90"
+                title="Change Voice"
+             >
+                🎭
+             </button>
+          )}
         </div>
 
         <button onClick={handleSnapshot} className="bg-gray-700 text-gray-300 p-2 rounded-lg text-xs" title="Snapshot">📸</button>
@@ -456,7 +413,7 @@ const Chat: React.FC = () => {
         {/* Marquee */}
         <div className="w-full bg-yellow-900/80 text-yellow-200 text-[10px] font-mono py-1 px-2 rounded overflow-hidden whitespace-nowrap mb-2 border border-yellow-500 border-dashed">
           <div className="animate-marquee inline-block">
-             ⚠️ AI PERSONA: 90s COMEDIAN. VOICE: {voiceOptions.find(v => v.id === state.selectedVoice)?.name}. SFX: {sfxOptions.find(s => s.id === state.soundMode)?.name}.
+             ⚠️ AI PERSONA: 90s COMEDIAN POET (ตลกคาเฟ่). VOICE: {voiceOptions.find(v => v.id === state.selectedVoice)?.name || 'Nong Joke'}.
           </div>
         </div>
         
@@ -510,10 +467,7 @@ const Chat: React.FC = () => {
               <div className="flex justify-between items-center mt-2">
                 {msg.role === 'model' && (
                   <button 
-                    onClick={() => {
-                        playTextToSpeech(msg.text);
-                        playSoundEffect(state.soundMode);
-                    }}
+                    onClick={() => playTextToSpeech(msg.text)}
                     className={`opacity-60 hover:opacity-100 active:scale-90 transition-all text-lg ${isSpeaking ? 'animate-pulse text-red-500' : ''}`}
                     title="Replay Audio"
                   >
@@ -600,7 +554,7 @@ const Chat: React.FC = () => {
               onClick={handleWatchAd}
               className="w-full bg-green-600 text-white font-black py-4 rounded-xl shadow-[4px_4px_0px_0px_#000] active:shadow-none active:translate-y-1 transition-all uppercase animate-pulse border-4 border-green-800 flex items-center justify-center gap-2"
             >
-              🚀 CLICK TO SUPPORT (GET +3)
+              📺 WATCH AD (+2 CHATS)
             </button>
           )}
         </div>
