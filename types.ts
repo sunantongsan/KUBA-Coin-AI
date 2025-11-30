@@ -1,4 +1,5 @@
 
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
@@ -47,7 +48,7 @@ export interface AdsgramController {
 declare global {
   interface Window {
     Adsgram?: {
-      init: (params: { blockId: string; debug?: boolean }) => AdsgramController;
+      init: (params: { blockId: string; debug?: boolean; uniqueId?: string }) => AdsgramController;
     };
     html2canvas?: (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>;
     Telegram: {

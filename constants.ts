@@ -1,4 +1,5 @@
 
+
 export const CONTRACT_ADDRESS = "EQDCCMpdq2lab20fVNcXTx44TrGfAnNDvWiFWt9wDfDUY5YT";
 export const AD_URL = "https://otieu.com/4/10189801";
 export const KUBA_LOGO_URL = "https://iili.io/KbAT4Jp.png";
@@ -13,6 +14,7 @@ export const ADGEM_POSTBACK_KEY = "h2j5bd7989nb1g3j03ea0d1k";
 export const ADGEM_BANNED_SECRET = "5lblnajen32hid6095ad8hdl";
 
 // Adsgram Configuration (Video Ads in Chat)
+// IMPORTANT: Go to https://partner.adsgram.ai, create a Block for your Platform (17060), and paste the ID here.
 export const ADSGRAM_BLOCK_ID = "18440"; // Block ID for Reward Video
 
 // Telegram Configuration

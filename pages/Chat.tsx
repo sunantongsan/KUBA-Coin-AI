@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
@@ -243,7 +244,13 @@ const Chat: React.FC = () => {
   const handleWatchAd = async () => {
     if (window.Adsgram) {
       try {
-        const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+        // Fix: Pass uniqueId for accurate revenue tracking
+        const uniqueId = state.telegramUserId ? state.telegramUserId.toString() : undefined;
+        
+        const AdController = window.Adsgram.init({ 
+          blockId: ADSGRAM_BLOCK_ID, 
+          uniqueId: uniqueId 
+        });
         const result = await AdController.show();
 
         if (result.done) {
