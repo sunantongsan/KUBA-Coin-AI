@@ -38,8 +38,8 @@ const Wallet: React.FC = () => {
     // Using the App ID 41341
     const offerwallUrl = `https://api.adgem.com/v1/wall?appid=${ADGEM_APP_ID}&playerid=${userId}`;
 
-    // Open in Telegram Native Browser
-    if (window.Telegram?.WebApp?.openLink) {
+    // Open in Telegram Native Browser (v6.4+), else fallback
+    if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
         window.Telegram.WebApp.openLink(offerwallUrl, { try_instant_view: false });
     } else {
         window.open(offerwallUrl, '_blank', 'noopener,noreferrer');
@@ -65,7 +65,7 @@ const Wallet: React.FC = () => {
 
   const openChart = () => {
     const chartUrl = 'https://geckoterminal.com';
-    if (window.Telegram?.WebApp?.openLink) {
+    if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
       window.Telegram.WebApp.openLink(chartUrl, { try_instant_view: false });
     } else {
       window.open(chartUrl, '_blank', 'noopener,noreferrer');
