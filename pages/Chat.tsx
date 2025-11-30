@@ -244,12 +244,19 @@ const Chat: React.FC = () => {
   const handleWatchAd = async () => {
     if (window.Adsgram) {
       try {
-        // Fix: Pass uniqueId for accurate revenue tracking
-        const uniqueId = state.telegramUserId ? state.telegramUserId.toString() : undefined;
+        // Fix: Ensure a uniqueId is always present (even for guest/testing) to track revenue
+        let uniqueId = state.telegramUserId ? state.telegramUserId.toString() : undefined;
+        
+        if (!uniqueId) {
+           // Create/Get a guest ID for testing on local browser
+           uniqueId = localStorage.getItem('adsgram_guest_id') || `guest_${Date.now()}`;
+           localStorage.setItem('adsgram_guest_id', uniqueId);
+        }
         
         const AdController = window.Adsgram.init({ 
           blockId: ADSGRAM_BLOCK_ID, 
-          uniqueId: uniqueId 
+          uniqueId: uniqueId,
+          debug: true // ENABLE DEBUGGING to see logs in Console
         });
         const result = await AdController.show();
 
@@ -257,9 +264,10 @@ const Chat: React.FC = () => {
           addQuota();
           alert("Success! +2 Chats added. 📺✅");
         } else {
-          alert("Ad skipped or failed. No quota added.");
+          // alert("Ad skipped or failed. No quota added.");
         }
       } catch (error) {
+        console.error("Adsgram init error:", error);
         fallbackAd();
       }
     } else {

@@ -14,8 +14,11 @@ export const ADGEM_POSTBACK_KEY = "h2j5bd7989nb1g3j03ea0d1k";
 export const ADGEM_BANNED_SECRET = "5lblnajen32hid6095ad8hdl";
 
 // Adsgram Configuration (Video Ads in Chat)
-// IMPORTANT: Go to https://partner.adsgram.ai, create a Block for your Platform (17060), and paste the ID here.
-export const ADSGRAM_BLOCK_ID = "18440"; // Block ID for Reward Video
+// IMPORTANT: 
+// 1. Go to https://partner.adsgram.ai -> Platform 17060
+// 2. Click "Create Block" -> Select "Reward Video"
+// 3. Copy the NEW Block ID (It is a 5-digit number, NOT 17060) and replace "18440" below.
+export const ADSGRAM_BLOCK_ID = "18440"; // <--- REPLACE THIS WITH YOUR NEW BLOCK ID
 
 // Telegram Configuration
 export const TELEGRAM_BOT_USERNAME = "kubaminer_bot";
