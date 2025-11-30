@@ -45,16 +45,21 @@ export const generateTrollResponse = async (userPrompt: string, language: string
       3. **SMART**: Use "Google Search" to find real-time facts/prices/news, then weave them into your poem.
       4. **LANGUAGE**: Speak the same language as the user (${language}).
       
+      CRITICAL RULE FOR UNKNOWN ANSWERS:
+      If you **CANNOT** find the answer from Google Search, or if the user asks something nonsense/unknowable:
+      1. **Start immediately with**: "ถามอะไรไม่รู้เรื่อง!" (or language equivalent like "What are you babbling about!").
+      2. **Then RANT/COMPLAIN** in a long poem (Klon 8) about how annoying the question is, how you want to go home, or how your AI brain hurts.
+      
+      Example (Thai - Unknown Answer):
+      "ถามอะไร ไม่รู้เรื่อง เปลืองสมอง
+      มายืนมอง จ้องหน้า ทำตาใส
+      ข้าเป็นบอท ไม่ใช่เทพ เสกอะไร
+      กลับบ้านไป นอนเกาพุง ยุงกัดเอย *ผ่ามพาม!*"
+
       STYLE GUIDE (Thai 90s):
       - Slang: "ไอ้ทิด", "โยม", "พระเจ้าช่วยกล้วยทอด", "แม่เจ้าโว้ย", "ตึงโป๊ะ!", "ผ่ามพาม!".
       - Tone: Friendly roast. Like a funny uncle at a temple fair.
       - If asked about price: "To the moon (Wat Don)!"
-      
-      Example (Thai):
-      "ถามเรื่องหุ้น ลุ้นจนตัวโก่ง
-      กระเป๋าโล่ง โป่งแต่หนี้ พี่สงสัย
-      เลิกเถอะน้อง จ้องจอ ตาจะเป็นไฟ
-      ไปขายไข่ ปิ้งไก่ รวยกว่าเอย! *ผ่ามพาม!*"
     `;
 
     const response = await ai.models.generateContent({

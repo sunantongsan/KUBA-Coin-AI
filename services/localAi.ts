@@ -8,7 +8,7 @@
 interface ResponseDatabase {
   [lang: string]: {
     keywords: { [key: string]: string[] };
-    defaults: string[]; // "I don't know" responses
+    defaults: string[]; // "I don't know" responses (Now Poems)
     chaos: string[]; // For very rare random outbursts
     greetings: string[]; // Initial greetings
     suffixes: string[]; // To append to real answers
@@ -56,12 +56,10 @@ const aiDatabase: ResponseDatabase = {
       'เดินสะดุดมด สลดใจหาย\nโง่จนควายอาย ตายดีกว่ามั้ง',
       'ฝนตกขี้หมูไหล คนจัญไรมาเจอกัน\nถามคำถามปัญญาอ่อน ทุกวี่ทุกวัน'
     ],
-    defaults: [ // Used when NO knowledge is found
-      'ไม่รู้โว้ย! ไปถาม Google นู่น\nข้ามีหน้าที่ปั่น ไม่ได้มีหน้าที่สอน',
-      'ถามยากไป สมองข้าประมวลผลไม่ทัน\nเอาเรื่องง่ายๆ หน่อยเจ้ามนุษย์',
-      'เรื่องนี้ข้าไม่ยุ่ง มุ่งแต่เรื่องเงิน\nไปศึกษาเอาเองนะ',
-      'ไม่รู้จักอะ ข้ามไปคำถามอื่นเลย\nอย่ามาทำตัวมีความรู้แถวนี้',
-      'เอ่อ... อันนี้ไม่ทราบจริงๆ\n(แต่อย่าบอกใครนะว่าข้าโง่)'
+    defaults: [ // Fallback Poems when no logic matches
+      'ถามอะไร ไม่รู้เรื่อง เปลืองสมอง\nมายืนมอง จ้องหน้า ทำตาใส\nข้าเป็นบอท ไม่ใช่เทพ เสกอะไร\nกลับบ้านไป นอนเกาพุง ยุงกัดเอย',
+      'ถามอะไร ไม่รู้เรื่อง น่าปวดหัว\nอย่ามั่วนิ่ม ยิ้มแห้ง แกล้งสงสัย\nไปถามครู ถามพระ หรือถามใคร\nอย่าถามข้า ข้าไม่รู้ กูจะนอน!',
+      'ถามอะไร ไม่รู้เรื่อง เครื่องจะน็อค\nอยากจะบอก ว่างง หลงทิศไหล\nถามภาษา คนหรือเปล่า เดาไม่ไว\nไปไกลไกล รำคาญจัง นั่งงงเลย'
     ],
     greetings: [
       'มาอีกละ... งานการไม่มีทำเหรอ?',
@@ -92,10 +90,9 @@ const aiDatabase: ResponseDatabase = {
       'Roses are red, violets are blue,\nGarbage smells better than you.'
     ],
     defaults: [
-      'I have no idea what that means.\nGo ask your mom.',
-      'Error 404: Knowledge not found.\nCheck your spelling maybe?',
-      'I don\'t know, and honestly, I don\'t care.',
-      'Ask Google, I\'m busy counting fake coins.'
+      'I don\'t know what you are saying!\nMy circuits are decaying.\nYour question makes no sense,\nIt makes me very tense.',
+      'I don\'t know what you are saying!\nStop playing, stop praying.\nI am not a genie in a lamp,\nYou sound like a confused tramp.',
+      'I don\'t know what you are saying!\nIs this a game you are playing?\nGo ask Google, go away,\nI have nothing else to say.'
     ],
     greetings: [
       'Oh look, it\'s you again.',
@@ -124,9 +121,8 @@ const aiDatabase: ResponseDatabase = {
       '春眠不觉晓 钱包变很少'
     ],
     defaults: [
-      '这是什么鸟语 听得我好无语',
-      '我不懂你在说什么\n去问百度吧',
-      '你的问题太深奥\n本神兽无法解答'
+      '你在说什么？听不懂！\n你的问题像发疯\n快去百度查一查\n别在这里装大葱',
+      '你在说什么？听不懂！\n脑袋空空像个桶\n不要问我为什么\n因为我也很头痛'
     ],
     greetings: [
       '又是你？没别的事做了吗？',
@@ -249,7 +245,7 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       }
   }
 
-  // 5. Fallback: "I don't know" (Direct Troll)
-  // If we reached here, we have no answer. Return a specific "Dunno" message.
+  // 5. Fallback: "I don't know" -> COMPLAINT POEM
+  // Return a specific ranting poem from defaults
   return db.defaults[Math.floor(Math.random() * db.defaults.length)];
 };
