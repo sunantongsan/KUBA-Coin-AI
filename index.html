@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,6 +7,10 @@
     <title>KUBA Coin AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Adsgram Script for Video Ads -->
+    <script src="https://adsgram.ai/js/adsgram.js"></script>
+    <!-- HTML2Canvas for Screenshots -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -20,6 +25,7 @@
             },
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
+              mono: ['monospace'], 
             },
             animation: {
               'bounce-slow': 'bounce 3s infinite',
@@ -27,6 +33,7 @@
               'wiggle': 'wiggle 3s ease-in-out infinite',
               'tilt': 'tilt 5s ease-in-out infinite',
               'spin-reverse': 'spin-reverse 10s linear infinite',
+              'marquee': 'marquee 25s linear infinite',
             },
             keyframes: {
               float: {
@@ -45,6 +52,10 @@
               'spin-reverse': {
                 '0%': { transform: 'rotate(0deg)' },
                 '100%': { transform: 'rotate(-360deg)' },
+              },
+              marquee: {
+                '0%': { transform: 'translateX(100%)' },
+                '100%': { transform: 'translateX(-100%)' },
               }
             }
           }
@@ -55,6 +66,7 @@
       body {
         background-color: #000000;
         color: #FFFFFF;
+        overscroll-behavior: none;
       }
       .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -67,17 +79,17 @@
 <script type="importmap">
 {
   "imports": {
+    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.13",
+    "crypto": "https://aistudiocdn.com/crypto@^1.0.1",
+    "@vercel/kv": "https://aistudiocdn.com/@vercel/kv@^3.0.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
     "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
     "vite": "https://aistudiocdn.com/vite@^7.2.4",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.13",
-    "crypto": "https://aistudiocdn.com/crypto@^1.0.1",
-    "@vercel/kv": "https://aistudiocdn.com/@vercel/kv@^3.0.0"
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
   }
 }
 </script>

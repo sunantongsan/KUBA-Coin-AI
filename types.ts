@@ -25,8 +25,24 @@ export interface AdConfig {
   rewardQuota: number;
 }
 
+// Adsgram Interfaces
+export interface ShowPromiseResult {
+  done: boolean;
+  description: string;
+  state: 'load' | 'render' | 'playing' | 'destroy';
+  error: boolean;
+}
+
+export interface AdsgramController {
+  show: () => Promise<ShowPromiseResult>;
+}
+
 declare global {
   interface Window {
+    Adsgram?: {
+      init: (params: { blockId: string; debug?: boolean }) => AdsgramController;
+    };
+    html2canvas?: (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>;
     Telegram: {
       WebApp: {
         ready: () => void;

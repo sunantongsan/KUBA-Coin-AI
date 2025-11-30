@@ -10,7 +10,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { userId, language, data, timestamp } = req.body;
     
-    // Validate
     if (!data || !data.prompt || !data.response || !data.feedback) {
        return res.status(400).json({ error: 'Missing feedback data' });
     }
@@ -22,12 +21,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ...data
     };
 
-    // Store in a list in Redis/KV (key: feedback_logs)
-    // lpush adds to the head of the list
+    // Store in Redis list 'feedback_logs'
     await kv.lpush('feedback_logs', logEntry);
-
-    // Optional: Trim list to keep only last 1000 entries to save space
-    await kv.ltrim('feedback_logs', 0, 999);
+    await kv.ltrim('feedback_logs', 0, 999); // Keep last 1000 logs
 
     return res.status(200).json({ success: true });
   } catch (error) {
