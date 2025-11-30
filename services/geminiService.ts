@@ -34,7 +34,7 @@ async function decodeAudioData(
   return buffer;
 }
 
-// Updated to support Audio Input
+// Updated to support Multimodal Input (Audio & Images)
 export const generateTrollResponse = async (
   input: string | { data: string, mimeType: string }, 
   language: string
@@ -49,34 +49,33 @@ export const generateTrollResponse = async (
       2. **MANDATORY**: You MUST answer in **RHYMES** or **POETRY** (Thai: Klon 8 / กลอนแปด, English: AABB/ABAB).
       3. **SMART**: Use "Google Search" to find real-time facts/prices/news, then weave them into your poem.
       4. **LANGUAGE**: Speak the same language as the user (${language}).
-      5. **AUDIO INPUT**: If the user sends AUDIO, listen carefully and reply to what they said in your Comedian Poet Persona.
+      5. **MULTIMODAL**: 
+         - If user sends AUDIO: Listen and reply to what they said.
+         - If user sends IMAGE: Roast the image! Describe what you see funnily and make a poem about it.
       
       CRITICAL RULE FOR UNKNOWN ANSWERS:
       If you **CANNOT** find the answer from Google Search, or if the user asks something nonsense/unknowable:
-      1. **Start immediately with**: "ถามอะไรไม่รู้เรื่อง!" (or language equivalent like "What are you babbling about!").
-      2. **Then RANT/COMPLAIN** in a long poem (Klon 8) about how annoying the question is, how you want to go home, or how your AI brain hurts.
+      1. **Start immediately with**: "ถามอะไรไม่รู้เรื่อง!" (or language equivalent).
+      2. **Then RANT/COMPLAIN** in a long poem (Klon 8) about how annoying the question is.
       
-      Example (Thai - Unknown Answer):
-      "ถามอะไร ไม่รู้เรื่อง เปลืองสมอง
-      มายืนมอง จ้องหน้า ทำตาใส
-      ข้าเป็นบอท ไม่ใช่เทพ เสกอะไร
-      กลับบ้านไป นอนเกาพุง ยุงกัดเอย *ผ่ามพาม!*"
-
       STYLE GUIDE (Thai 90s):
       - Slang: "ไอ้ทิด", "โยม", "พระเจ้าช่วยกล้วยทอด", "แม่เจ้าโว้ย", "ตึงโป๊ะ!", "ผ่ามพาม!".
       - Tone: Friendly roast. Like a funny uncle at a temple fair.
-      - If asked about price: "To the moon (Wat Don)!"
     `;
 
     let contents;
     if (typeof input === 'string') {
       contents = input;
     } else {
-      // Multimodal Input (Audio)
+      // Multimodal Input (Audio or Image)
+      const promptText = input.mimeType.startsWith('audio/') 
+        ? "Listen to this audio and reply in your character (Thai 90s Comedian Poet)." 
+        : "Look at this image. Roast it or describe it with a funny poem in your character.";
+
       contents = {
         parts: [
           { inlineData: { data: input.data, mimeType: input.mimeType } },
-          { text: "Listen to this audio and reply in your character (Thai 90s Comedian Poet)." }
+          { text: promptText }
         ]
       };
     }

@@ -6,6 +6,11 @@ export interface ChatMessage {
   timestamp: number;
   feedback?: 'up' | 'down';
   sources?: { title: string; uri: string }[];
+  attachment?: {
+    type: 'image' | 'audio';
+    url: string; // Base64 data URL for display
+    mimeType: string;
+  };
 }
 
 export interface AppState {
@@ -19,7 +24,7 @@ export interface AppState {
   lastResetDate: string;
   hasSeenAdToday: boolean;
   language: string;
-  selectedVoice: string; // New field for voice selection
+  selectedVoice: string;
 }
 
 export interface AdConfig {

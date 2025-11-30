@@ -20,6 +20,7 @@ const Chat: React.FC = () => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 90s Thai Comedian Voice Options
   const voiceOptions = [
@@ -67,7 +68,7 @@ const Chat: React.FC = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
-        handleSendAudio(audioBlob);
+        handleSendMedia(audioBlob, 'audio');
       };
 
       mediaRecorder.start();
@@ -106,26 +107,32 @@ const Chat: React.FC = () => {
     });
   };
 
-  const handleSendAudio = async (audioBlob: Blob) => {
+  const handleSendMedia = async (blob: Blob, type: 'audio' | 'image') => {
     if (state.dailyQuota <= 0) {
       handleWatchAd();
       return;
     }
 
+    const base64Data = await blobToBase64(blob);
+    const mimeType = blob.type || (type === 'audio' ? 'audio/webm' : 'image/jpeg');
+    const displayUrl = URL.createObjectURL(blob);
+
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      text: "🎤 Voice Message",
-      timestamp: Date.now()
+      text: type === 'audio' ? "🎤 Voice Message" : "📷 Image Upload",
+      timestamp: Date.now(),
+      attachment: {
+        type: type,
+        url: displayUrl,
+        mimeType: mimeType
+      }
     };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     decrementQuota();
 
     try {
-        const base64Data = await blobToBase64(audioBlob);
-        const mimeType = audioBlob.type || 'audio/webm';
-
         const { text: responseText, sources } = await generateTrollResponse({ data: base64Data, mimeType }, state.language);
 
         const aiMsg: ChatMessage = {
@@ -143,15 +150,22 @@ const Chat: React.FC = () => {
           playTextToSpeech(responseText);
         }
     } catch (error) {
-        console.error("Audio processing failed", error);
+        console.error("Media processing failed", error);
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'model',
-            text: "My ears are clogged (Audio Error). Try typing!",
+            text: "My brain failed to process that. Try again!",
             timestamp: Date.now()
         }]);
     } finally {
         setIsLoading(false);
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      handleSendMedia(file, 'image');
     }
   };
 
@@ -418,6 +432,14 @@ const Chat: React.FC = () => {
                 </div>
               )}
 
+              {/* Attachment Display */}
+              {msg.attachment && msg.attachment.type === 'image' && (
+                <img src={msg.attachment.url} alt="Uploaded" className="w-full rounded-lg mb-2 border-2 border-black" />
+              )}
+              {msg.attachment && msg.attachment.type === 'audio' && (
+                <div className="text-xs mb-1 italic">🎤 Audio Clip Sent</div>
+              )}
+
               <p className={`leading-relaxed whitespace-pre-wrap ${msg.role === 'model' ? 'font-mono font-bold text-base italic' : ''}`}>
                 {msg.text}
               </p>
@@ -482,6 +504,22 @@ const Chat: React.FC = () => {
         <div className="flex gap-2">
           {state.dailyQuota > 0 ? (
             <>
+              {/* Image Upload Input */}
+              <input 
+                 type="file" 
+                 accept="image/*" 
+                 ref={fileInputRef} 
+                 className="hidden" 
+                 onChange={handleImageSelect}
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-12 h-full rounded-xl bg-gray-800 text-white border-4 border-gray-700 flex items-center justify-center active:scale-95 text-xl"
+                title="Send Image"
+              >
+                🖼️
+              </button>
+
               {/* Mic Button - Toggle Record */}
               <button
                 onClick={toggleRecording}
@@ -499,9 +537,9 @@ const Chat: React.FC = () => {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder={isRecording ? "Recording Audio..." : "Type or Tap Mic..."}
+                placeholder={isRecording ? "Recording..." : "Type/Img/Mic..."}
                 disabled={isLoading || isRecording}
-                className="flex-grow bg-black/90 text-white border-4 border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-kuba-yellow focus:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all font-bold"
+                className="flex-grow bg-black/90 text-white border-4 border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-kuba-yellow focus:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all font-bold text-sm"
               />
               <button 
                 onClick={() => handleSendMessage()}
