@@ -8,9 +8,10 @@
 interface ResponseDatabase {
   [lang: string]: {
     keywords: { [key: string]: string[] };
-    defaults: string[]; // Keep valid strings here
-    chaos: string[];
+    defaults: string[]; // "I don't know" responses
+    chaos: string[]; // For very rare random outbursts
     greetings: string[]; // Initial greetings
+    suffixes: string[]; // To append to real answers
   };
 }
 
@@ -55,10 +56,12 @@ const aiDatabase: ResponseDatabase = {
       'เดินสะดุดมด สลดใจหาย\nโง่จนควายอาย ตายดีกว่ามั้ง',
       'ฝนตกขี้หมูไหล คนจัญไรมาเจอกัน\nถามคำถามปัญญาอ่อน ทุกวี่ทุกวัน'
     ],
-    defaults: [
-      'พูดจาภาษาคน หรือบ่นภาษาควาย',
-      'พิมพ์อะไรมา อ่านแล้วปวดตับ',
-      'ถามวัวตอบม้า ถามป้าตอบลุง'
+    defaults: [ // Used when NO knowledge is found
+      'ไม่รู้โว้ย! ไปถาม Google นู่น\nข้ามีหน้าที่ปั่น ไม่ได้มีหน้าที่สอน',
+      'ถามยากไป สมองข้าประมวลผลไม่ทัน\nเอาเรื่องง่ายๆ หน่อยเจ้ามนุษย์',
+      'เรื่องนี้ข้าไม่ยุ่ง มุ่งแต่เรื่องเงิน\nไปศึกษาเอาเองนะ',
+      'ไม่รู้จักอะ ข้ามไปคำถามอื่นเลย\nอย่ามาทำตัวมีความรู้แถวนี้',
+      'เอ่อ... อันนี้ไม่ทราบจริงๆ\n(แต่อย่าบอกใครนะว่าข้าโง่)'
     ],
     greetings: [
       'มาอีกละ... งานการไม่มีทำเหรอ?',
@@ -66,6 +69,12 @@ const aiDatabase: ResponseDatabase = {
       'กำลังจะนอนพอดี... มีไรว่ามา',
       'เตรียมคำด่าไว้ให้แล้ว เข้ามาเลย',
       'วันนี้พอร์ตแดงล่ะสิ ถึงมาคุยกับบอท'
+    ],
+    suffixes: [
+      '(ไปหาอ่านต่อเองนะ ขี้เกียจเล่า)',
+      '(รู้แล้วก็เหยียบไว้นะ)',
+      '(นี่คือความรู้ฟรี จงสำนึกบุญคุณซะ)',
+      '(ฉลาดขึ้นมานิดนึงรึยัง?)'
     ]
   },
   'en-US': {
@@ -83,9 +92,10 @@ const aiDatabase: ResponseDatabase = {
       'Roses are red, violets are blue,\nGarbage smells better than you.'
     ],
     defaults: [
-      'Blah blah blah, yak yak yak.',
-      'I am smart, you are dense.',
-      'Error 404: Brain not found.'
+      'I have no idea what that means.\nGo ask your mom.',
+      'Error 404: Knowledge not found.\nCheck your spelling maybe?',
+      'I don\'t know, and honestly, I don\'t care.',
+      'Ask Google, I\'m busy counting fake coins.'
     ],
     greetings: [
       'Oh look, it\'s you again.',
@@ -93,6 +103,12 @@ const aiDatabase: ResponseDatabase = {
       'Ready to lose some brain cells?',
       'Wallet empty? Don\'t cry to me.',
       'Make it quick, I have better things to do.'
+    ],
+    suffixes: [
+      '(Go google the rest, I am tired.)',
+      '(You are welcome, peasant.)',
+      '(Now leave me alone.)',
+      '(Try to remember this, if you have a brain.)'
     ]
   },
   'zh-CN': {
@@ -109,31 +125,31 @@ const aiDatabase: ResponseDatabase = {
     ],
     defaults: [
       '这是什么鸟语 听得我好无语',
-      '此人多半有病 而且病得不轻'
+      '我不懂你在说什么\n去问百度吧',
+      '你的问题太深奥\n本神兽无法解答'
     ],
     greetings: [
       '又是你？没别的事做了吗？',
       '有话快说，有屁快放',
       '准备好被怼了吗？',
       '今天亏了多少？说出来让我开心下'
+    ],
+    suffixes: [
+      '(剩下的自己去百度吧)',
+      '(跪下谢恩吧)',
+      '(记住了吗？凡人)'
     ]
   }
 };
 
 const detectLanguage = (text: string, preferredLang: string): string => {
-  // Score based approach for robustness
   let thScore = (text.match(/[\u0E00-\u0E7F]/g) || []).length;
   let cnScore = (text.match(/[\u4E00-\u9FFF]/g) || []).length;
   let enScore = (text.match(/[a-zA-Z]/g) || []).length;
 
-  // Threshold: even a few chars is enough to switch context
   if (thScore > 0) return 'th-TH';
   if (cnScore > 0) return 'zh-CN';
-  
-  // Only default to EN if EN characters dominate or strictly no other scripts
   if (enScore > 0) return 'en-US';
-
-  // Fallback to user preference if ambiguous (numbers, emojis)
   return preferredLang;
 };
 
@@ -168,37 +184,6 @@ async function fetchWikipediaSummary(query: string, lang: string): Promise<strin
   }
 }
 
-// --- DYNAMIC INTERNET TROLLING ---
-
-async function fetchExternalTroll(lang: string): Promise<string | null> {
-  // Only EN allows good free joke APIs.
-  // For TH/CN, we use the procedural mixer below.
-  if (lang !== 'en-US') return null;
-
-  try {
-    const sources = [
-      // 1. Useless Facts (framed as "Did you know you are useless? Also...")
-      async () => {
-         const res = await fetch('https://uselessfacts.jsph.pl/random.json?language=en');
-         const data = await res.json();
-         return `Did you know? ${data.text}\n(Now you know, but you're still useless.)`;
-      },
-      // 2. Bad Advice
-      async () => {
-         const res = await fetch('https://api.adviceslip.com/advice');
-         const data = await res.json();
-         return `Troll Advice: ${data.slip.advice}\n(Don't blame me if you get arrested.)`;
-      }
-    ];
-
-    const randomSource = sources[Math.floor(Math.random() * sources.length)];
-    return await randomSource();
-
-  } catch (e) {
-    return null;
-  }
-}
-
 // --- MAIN AI ENGINE ---
 
 export const getGreeting = (lang: string): string => {
@@ -209,19 +194,23 @@ export const getGreeting = (lang: string): string => {
 
 export const generateLocalResponse = async (text: string, userPreferredLang: string): Promise<string> => {
   // Simulate Thinking
-  await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+  await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 800));
 
   const cleanText = text.toLowerCase().trim();
   const langKey = detectLanguage(text, userPreferredLang);
   const db = aiDatabase[langKey];
+  
+  // Helper to get random suffix
+  const getSuffix = () => db.suffixes[Math.floor(Math.random() * db.suffixes.length)];
 
   // 1. Check for MATH (Simple calculation)
-  if (/^[0-9\s\.\+\-\*\/]+$/.test(cleanText)) {
+  // Strict regex to avoid matching random numbers
+  if (/^[0-9\s\.\+\-\*\/()]+$/.test(cleanText) && cleanText.length > 2) {
       try {
           // eslint-disable-next-line no-new-func
           const result = new Function('return ' + cleanText)();
-          if (langKey === 'th-TH') return `คำตอบคือ ${result}\n(ง่ายขนาดนี้ยังต้องถาม?)`;
-          return `The answer is ${result}.\n(Use a calculator next time, lazy human.)`;
+          if (langKey === 'th-TH') return `คำตอบคือ: ${result}\n\n(เลขแค่นี้คิดเองไม่เป็นเหรอ?)`;
+          return `The answer is: ${result}\n\n(Use a calculator next time, genius.)`;
       } catch (e) { /* ignore */ }
   }
 
@@ -231,46 +220,36 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       const symbol = cryptoMatch[1];
       const price = await fetchBinancePrice(symbol);
       if (price) {
-          if (langKey === 'th-TH') return `ราคา ${symbol.toUpperCase()} ตอนนี้อยู่ที่ $${price}\n(จะขึ้นหรือลง มึงก็ดอยอยู่ดี)`;
-          return `${symbol.toUpperCase()} is at $${price}.\n(You are still poor though.)`;
+          if (langKey === 'th-TH') return `ราคา ${symbol.toUpperCase()} ตอนนี้: $${price}\n\n(จะขึ้นหรือลง เอ็งก็ดอยอยู่ดี)`;
+          return `${symbol.toUpperCase()} Price: $${price}\n\n(You are still poor though.)`;
       }
   }
 
-  // 3. Check for KNOWLEDGE (Wikipedia)
-  if (cleanText.length > 4 && (cleanText.includes('คือ') || cleanText.includes('what is') || cleanText.includes('who is'))) {
-      const query = cleanText.replace(/what is|who is|คืออะไร|คือ/g, '').trim();
-      const wiki = await fetchWikipediaSummary(query, langKey);
-      if (wiki) {
-          if (langKey === 'th-TH') return `ไปสืบมาให้ละ: "${wiki}"\n(จำใส่สมองอันน้อยนิดไว้นะ)`;
-          return `According to my infinite wisdom: "${wiki}"\n(Try to remember it, human.)`;
-      }
-  }
-
-  // 4. Keyword Matching
+  // 3. Keyword Matching (Prioritize hardcoded jokes)
   for (const [keyword, responses] of Object.entries(db.keywords)) {
     if (cleanText.includes(keyword)) {
       return responses[Math.floor(Math.random() * responses.length)];
     }
   }
 
-  // 5. DYNAMIC / PROCEDURAL FALLBACK
-  // Instead of static defaults, try to fetch fresh content or generate it
-  
-  if (langKey === 'en-US') {
-      // Try external API for variety
-      const externalTroll = await fetchExternalTroll('en-US');
-      if (externalTroll) return externalTroll;
-  }
-  
-  if (langKey === 'th-TH') {
-      // Use the Mixer to generate a new insult
-      return generateThaiInsult();
-  }
-
-  // Final Fallback (Static)
-  if (Math.random() < 0.30) {
-     return db.chaos[Math.floor(Math.random() * db.chaos.length)];
+  // 4. Check for KNOWLEDGE (Wikipedia) - Enhanced
+  // Try to search if the text looks like a question or a noun phrase (len > 2)
+  // Exclude common chat words to avoid searching "hello"
+  const ignoreWords = ['hello', 'hi', 'sawasdee', 'test', 'help', 'สวัสดี', 'ทัก', 'เทส'];
+  if (!ignoreWords.includes(cleanText) && cleanText.length > 2) {
+      // Remove question words to get the subject
+      const query = cleanText.replace(/what is|who is|tell me about|คืออะไร|คือ|ช่วยบอก|รู้จัก|ไหม|ครับ|คะ|ป่ะ|วะ|มั้ย/gi, '').trim();
+      
+      if (query.length > 1) {
+          const wiki = await fetchWikipediaSummary(query, langKey);
+          if (wiki) {
+              if (langKey === 'th-TH') return `ข้อมูลของ "${query}":\n${wiki}\n\n${getSuffix()}`;
+              return `Info on "${query}":\n${wiki}\n\n${getSuffix()}`;
+          }
+      }
   }
 
+  // 5. Fallback: "I don't know" (Direct Troll)
+  // If we reached here, we have no answer. Return a specific "Dunno" message.
   return db.defaults[Math.floor(Math.random() * db.defaults.length)];
 };
