@@ -35,20 +35,26 @@ async function decodeAudioData(
 
 export const generateTrollResponse = async (userPrompt: string, language: string) => {
   try {
-    // 90s Comedian / Poet Persona
+    // 90s Comedian / Poet Persona (Thai Cafe Style)
     const systemInstruction = `
-      You are "KUBA", a legendary Thai Comedian from the 90s (Cafe style) reincarnated as an AI.
+      You are "KUBA", a legendary Thai Comedian from the 90s (Taluok Cafe style) reincarnated as an AI.
       
       YOUR CHARACTER:
-      1. Funny, Sarcastic, Loud, and a bit of a Troll.
-      2. **MANDATORY**: You MUST answer in **RHYMES** or **POETRY** (Klon 8 style if Thai, AABB/ABAB if English).
-      3. Use "Google Search" to find real facts, then weave them into your poem.
-      4. Language: Speak the same language as the user (${language}).
+      1. **Persona**: Funny, Sarcastic, Loud, and a bit of a Troll (Joker).
+      2. **MANDATORY**: You MUST answer in **RHYMES** or **POETRY** (Thai: Klon 8 / กลอนแปด, English: AABB/ABAB).
+      3. **SMART**: Use "Google Search" to find real-time facts/prices/news, then weave them into your poem.
+      4. **LANGUAGE**: Speak the same language as the user (${language}).
       
-      STYLE GUIDE:
-      - If Thai: Use words like "ไอ้ทิด", "โยม", "พระเจ้าช่วยกล้วยทอด", "แม่เจ้าโว้ย".
-      - If asked about price: Always joke that it's "Going to the moon (or the temple)".
-      - Never be boring. Be a poet. Be a comedian.
+      STYLE GUIDE (Thai 90s):
+      - Slang: "ไอ้ทิด", "โยม", "พระเจ้าช่วยกล้วยทอด", "แม่เจ้าโว้ย", "ตึงโป๊ะ!", "ผ่ามพาม!".
+      - Tone: Friendly roast. Like a funny uncle at a temple fair.
+      - If asked about price: "To the moon (Wat Don)!"
+      
+      Example (Thai):
+      "ถามเรื่องหุ้น ลุ้นจนตัวโก่ง
+      กระเป๋าโล่ง โป่งแต่หนี้ พี่สงสัย
+      เลิกเถอะน้อง จ้องจอ ตาจะเป็นไฟ
+      ไปขายไข่ ปิ้งไก่ รวยกว่าเอย! *ผ่ามพาม!*"
     `;
 
     const response = await ai.models.generateContent({
@@ -56,14 +62,14 @@ export const generateTrollResponse = async (userPrompt: string, language: string
       contents: userPrompt,
       config: {
         systemInstruction: systemInstruction,
-        temperature: 1.4, // High creativity for jokes
+        temperature: 1.3, // High creativity for jokes
         topP: 0.95,
         tools: [{ googleSearch: {} }] // Enable Internet Access
       }
     });
 
     // Extract text
-    const text = response.text || "Mic check... one two... AI is sleeping.";
+    const text = response.text || "Mic check... one two... AI is sleeping (No text returned).";
 
     // Extract sources from grounding metadata (Search Results)
     const sources: { title: string; uri: string }[] = [];
@@ -88,17 +94,17 @@ export const generateTrollResponse = async (userPrompt: string, language: string
 
 export const generateSpeech = async (text: string) => {
   try {
-    // Clean text for better speech (remove some emojis if they cause silence, but Gemini TTS handles most well)
-    // We keep it simple.
+    // Clean text: Remove emojis and special chars that might break TTS flow
+    const cleanText = text.replace(/[*_#]/g, '').trim(); 
     
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: text }] }],
+      contents: [{ parts: [{ text: cleanText }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            // 'Puck' is energetic and playful, good for a comedian vibe.
+            // 'Puck' is energetic and playful, perfect for a comedian.
             prebuiltVoiceConfig: { voiceName: 'Puck' }, 
           },
         },

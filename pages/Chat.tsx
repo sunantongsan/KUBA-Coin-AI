@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
@@ -21,6 +20,7 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true); // Default to ON for "Comedian" experience
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -118,8 +118,10 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, aiMsg]);
       incrementBalance(INTERACTION_REWARD);
 
-      // Auto-play TTS for the new message
-      playTextToSpeech(responseText);
+      // Auto-play TTS for the new message if Sound is Enabled
+      if (isSoundEnabled) {
+        playTextToSpeech(responseText);
+      }
       
     } catch (error) {
       console.warn("Gemini unavailable, falling back to Local AI");
@@ -145,13 +147,14 @@ const Chat: React.FC = () => {
   const playTextToSpeech = async (text: string) => {
     if (isSpeaking) return;
     setIsSpeaking(true);
+    
     // Remove emojis for better TTS reading
     const cleanText = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
     
     await generateSpeech(cleanText);
     
-    // Reset speaking state after a rough estimate or immediately since AudioBuffer plays async
-    setTimeout(() => setIsSpeaking(false), 2000);
+    // Reset speaking state after a delay
+    setTimeout(() => setIsSpeaking(false), 3000);
   };
 
   const handleWatchAd = async () => {
@@ -164,7 +167,6 @@ const Chat: React.FC = () => {
           addQuota();
           alert("Success! +2 Chats added. 📺✅");
         } else {
-          // User skipped or error
           console.log("Adsgram result:", result);
           alert("Ad skipped or failed. No quota added.");
         }
@@ -179,7 +181,6 @@ const Chat: React.FC = () => {
   };
 
   const fallbackAd = () => {
-    // Fallback to Link if Video Ad fails
     if (window.confirm("Video Ad unavailable. Open partner link instead for +2 chats?")) {
       if (window.Telegram?.WebApp?.openLink) {
         window.Telegram.WebApp.openLink(AD_URL, { try_instant_view: false });
@@ -195,7 +196,7 @@ const Chat: React.FC = () => {
 
   const handleShare = () => {
     const appUrl = `https://t.me/${TELEGRAM_BOT_USERNAME}`; 
-    const shareText = "This KUBA AI is roasting me hard! 🤣 Come earn coins and get trolled.";
+    const shareText = "This KUBA AI is roasting me in poems! 🤣 Come earn coins.";
     const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`;
 
     if (window.Telegram?.WebApp?.openTelegramLink) {
@@ -231,43 +232,20 @@ const Chat: React.FC = () => {
   };
 
   const handleFeedback = async (msgId: string, type: 'up' | 'down') => {
-    let targetMsg: ChatMessage | undefined;
-    let associatedPrompt = "Unknown context";
-
-    setMessages(prev => {
-      const targetIndex = prev.findIndex(m => m.id === msgId);
-      if (targetIndex === -1) return prev;
-      targetMsg = prev[targetIndex];
-      for (let i = targetIndex - 1; i >= 0; i--) {
-        if (prev[i].role === 'user') {
-          associatedPrompt = prev[i].text;
-          break;
-        }
-      }
-      return prev.map(msg => msg.id === msgId ? { ...msg, feedback: type } : msg);
-    });
-
-    if (!targetMsg) return;
-
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      userId: state.telegramUserId,
-      language: state.language,
-      data: { prompt: associatedPrompt, response: targetMsg.text, feedback: type }
-    };
-
+    setMessages(prev => prev.map(msg => msg.id === msgId ? { ...msg, feedback: type } : msg));
+    // Silent feedback submission
     try {
-      await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logEntry),
-      });
-    } catch (e) { /* ignore */ }
+        await fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: msgId, type, timestamp: Date.now() })
+        });
+    } catch (e) {}
   };
 
   // Chaos Visuals
   const getChaosBadge = (id: string) => {
-    const badges = ['🤡', '🤖', '💩', '🔥', '🤪', '💀', '👽', '👻'];
+    const badges = ['🤡', '🎤', '💩', '🥁', '🤪', '🎸', '🤣', '👻'];
     return badges[parseInt(id.slice(-3)) % badges.length];
   };
 
@@ -275,15 +253,26 @@ const Chat: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
-      {/* Top Bar */}
+      {/* Top Bar with Sound Toggle */}
       <div className="flex justify-between items-center mb-4 gap-2">
         <div className="bg-gray-800 rounded-lg p-2 flex-grow flex justify-between items-center text-sm shadow-inner border border-gray-700">
           <span className="text-gray-400 font-mono">QUOTA: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
         </div>
         
+        {/* Voice Menu / Sound Toggle */}
+        <button 
+          onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
+          className={`p-2 rounded-lg text-xs font-bold transition-all border ${
+            isSoundEnabled 
+              ? 'bg-kuba-yellow text-black border-black shadow-sm' 
+              : 'bg-gray-700 text-gray-400 border-gray-600'
+          }`}
+          title={isSoundEnabled ? "Mute Voice" : "Enable Voice"}
+        >
+          {isSoundEnabled ? '🔊 ON' : '🔇 OFF'}
+        </button>
+
         <button onClick={handleSnapshot} className="bg-gray-700 text-gray-300 p-2 rounded-lg text-xs" title="Snapshot">📸</button>
-        <button onClick={handleCopyChat} className="bg-gray-700 text-gray-300 p-2 rounded-lg text-xs" title="Copy">📋</button>
-        
         <button 
           onClick={handleShare}
           className="bg-blue-600 text-white p-2 rounded-lg font-bold text-xs shadow-md border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
@@ -304,7 +293,7 @@ const Chat: React.FC = () => {
         {/* Marquee */}
         <div className="w-full bg-yellow-900/80 text-yellow-200 text-[10px] font-mono py-1 px-2 rounded overflow-hidden whitespace-nowrap mb-2 border border-yellow-500 border-dashed">
           <div className="animate-marquee inline-block">
-             ⚠️ AI MODE: 90s COMEDIAN POET. VOICE ENABLED. DO NOT FEED THE TROLL.
+             ⚠️ AI PERSONA: 90s COMEDIAN POET (ตลกคาเฟ่). VOICE: {isSoundEnabled ? 'ON' : 'OFF'}. PREPARE TO BE ROASTED.
           </div>
         </div>
         
@@ -328,10 +317,10 @@ const Chat: React.FC = () => {
                 {msg.text}
               </p>
               
-              {/* Sources */}
+              {/* Sources - Search Grounding */}
               {msg.sources && msg.sources.length > 0 && (
                 <div className="mt-3 pt-2 border-t border-gray-300">
-                  <p className="text-[10px] text-gray-500 font-bold mb-1 uppercase tracking-wider">🔎 I GOOGLED THIS:</p>
+                  <p className="text-[10px] text-gray-500 font-bold mb-1 uppercase tracking-wider">🔎 I FOUND THIS ON THE NET:</p>
                   <div className="flex flex-wrap gap-1">
                     {msg.sources.map((source, idx) => (
                       <a 
@@ -353,8 +342,8 @@ const Chat: React.FC = () => {
                 {msg.role === 'model' && (
                   <button 
                     onClick={() => playTextToSpeech(msg.text)}
-                    className="opacity-60 hover:opacity-100 active:scale-90 transition-all text-lg"
-                    title="Play Audio"
+                    className={`opacity-60 hover:opacity-100 active:scale-90 transition-all text-lg ${isSpeaking ? 'animate-pulse text-red-500' : ''}`}
+                    title="Replay Audio"
                   >
                     🔊
                   </button>
@@ -377,7 +366,7 @@ const Chat: React.FC = () => {
         {isLoading && (
           <div className="flex justify-start relative z-10 pl-2">
              <div className="bg-white text-black p-4 rounded-2xl rounded-tl-none text-xs font-mono font-black animate-wiggle shadow-[6px_6px_0px_0px_#000] border-4 border-black rotate-1">
-               ✍️ WRITING A POEM TO ROAST YOU...
+               ✍️ COMPOSING A SICK RHYME...
              </div>
           </div>
         )}
@@ -392,13 +381,13 @@ const Chat: React.FC = () => {
               {/* Mic Button */}
               <button
                 onClick={handleSpeechInput}
-                className={`w-12 h-full rounded-xl font-black text-2xl border-4 border-gray-700 flex items-center justify-center transition-all ${
+                className={`w-14 h-full rounded-xl font-black text-2xl border-4 border-gray-700 flex items-center justify-center transition-all ${
                   isListening 
-                    ? 'bg-red-600 text-white animate-pulse border-red-800' 
+                    ? 'bg-red-600 text-white animate-pulse border-red-800 scale-105' 
                     : 'bg-gray-900 text-white active:scale-95'
                 }`}
               >
-                {isListening ? '⏹️' : '🎙️'}
+                {isListening ? '👂' : '🎙️'}
               </button>
 
               <input 
