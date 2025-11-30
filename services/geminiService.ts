@@ -33,7 +33,11 @@ async function decodeAudioData(
   return buffer;
 }
 
-export const generateTrollResponse = async (userPrompt: string, language: string) => {
+// Updated to support Audio Input
+export const generateTrollResponse = async (
+  input: string | { data: string, mimeType: string }, 
+  language: string
+) => {
   try {
     // 90s Comedian / Poet Persona (Thai Cafe Style)
     const systemInstruction = `
@@ -44,6 +48,7 @@ export const generateTrollResponse = async (userPrompt: string, language: string
       2. **MANDATORY**: You MUST answer in **RHYMES** or **POETRY** (Thai: Klon 8 / กลอนแปด, English: AABB/ABAB).
       3. **SMART**: Use "Google Search" to find real-time facts/prices/news, then weave them into your poem.
       4. **LANGUAGE**: Speak the same language as the user (${language}).
+      5. **AUDIO INPUT**: If the user sends AUDIO, listen carefully and reply to what they said in your Comedian Poet Persona.
       
       CRITICAL RULE FOR UNKNOWN ANSWERS:
       If you **CANNOT** find the answer from Google Search, or if the user asks something nonsense/unknowable:
@@ -62,9 +67,22 @@ export const generateTrollResponse = async (userPrompt: string, language: string
       - If asked about price: "To the moon (Wat Don)!"
     `;
 
+    let contents;
+    if (typeof input === 'string') {
+      contents = input;
+    } else {
+      // Multimodal Input (Audio)
+      contents = {
+        parts: [
+          { inlineData: { data: input.data, mimeType: input.mimeType } },
+          { text: "Listen to this audio and reply in your character (Thai 90s Comedian Poet)." }
+        ]
+      };
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: userPrompt,
+      contents: contents as any,
       config: {
         systemInstruction: systemInstruction,
         temperature: 1.3, // High creativity for jokes

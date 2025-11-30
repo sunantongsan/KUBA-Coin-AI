@@ -5,25 +5,19 @@ import { generateTrollResponse, generateSpeech } from '../services/geminiService
 import { ChatMessage } from '../types';
 import { AD_URL, INTERACTION_REWARD, ADSGRAM_BLOCK_ID, TELEGRAM_BOT_USERNAME } from '../constants';
 
-// Add Web Speech API types
-declare global {
-  interface Window {
-    webkitSpeechRecognition: any;
-    SpeechRecognition: any;
-  }
-}
-
 const Chat: React.FC = () => {
   const { state, decrementQuota, addQuota, incrementBalance } = useAppContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [isRecording, setIsRecording] = useState(false); // Changed from isListening to isRecording
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true); // Default to ON for "Comedian" experience
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true); 
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,48 +40,120 @@ const Chat: React.FC = () => {
     }
   }, []);
 
-  const handleSpeechInput = () => {
-    if (isListening) return;
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("Browser does not support speech recognition.");
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+        handleSendAudio(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Cannot access microphone. Please check permissions.");
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      handleStopRecording();
+    } else {
+      handleStartRecording();
+    }
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        // Remove data url prefix (e.g. "data:audio/webm;base64,")
+        const base64Data = base64String.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const handleSendAudio = async (audioBlob: Blob) => {
+    if (state.dailyQuota <= 0) {
+      handleWatchAd();
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    
-    // Set language based on app state
-    recognition.lang = state.language;
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      if (transcript) {
-        setInputText(transcript);
-        // Auto send after slight delay to let user see text
-        setTimeout(() => handleSendMessage(transcript), 500);
-      }
+    // Add placeholder user message
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      text: "🎤 Voice Message",
+      timestamp: Date.now()
     };
+    setMessages(prev => [...prev, userMsg]);
+    setIsLoading(true);
+    decrementQuota();
 
-    recognition.onerror = (event: any) => {
-      console.error("Speech recognition error", event.error);
-      setIsListening(false);
-    };
+    try {
+        const base64Data = await blobToBase64(audioBlob);
+        const mimeType = audioBlob.type || 'audio/webm';
 
-    recognition.start();
+        // Send Audio to Gemini
+        const { text: responseText, sources } = await generateTrollResponse({ data: base64Data, mimeType }, state.language);
+
+        const aiMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          text: responseText,
+          timestamp: Date.now(),
+          sources: sources
+        };
+
+        setMessages(prev => [...prev, aiMsg]);
+        incrementBalance(INTERACTION_REWARD);
+
+        if (isSoundEnabled) {
+          playTextToSpeech(responseText);
+        }
+    } catch (error) {
+        console.error("Audio processing failed", error);
+        setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'model',
+            text: "My ears are clogged (Audio Error). Try typing!",
+            timestamp: Date.now()
+        }]);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
-  const handleSendMessage = async (textOverride?: string) => {
-    const textToSend = textOverride || inputText;
+  const handleSendMessage = async () => {
+    const textToSend = inputText;
     
     if (!textToSend.trim()) return;
     if (state.dailyQuota <= 0) {
-      handleWatchAd(); // Auto trigger ad offer if user tries to send with no quota
+      handleWatchAd();
       return;
     }
 
@@ -104,7 +170,6 @@ const Chat: React.FC = () => {
     decrementQuota();
 
     try {
-      // Try Gemini AI first (Smarter + Internet Access + Poetry)
       const { text: responseText, sources } = await generateTrollResponse(userMsg.text, state.language);
       
       const aiMsg: ChatMessage = {
@@ -118,14 +183,12 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, aiMsg]);
       incrementBalance(INTERACTION_REWARD);
 
-      // Auto-play TTS for the new message if Sound is Enabled
       if (isSoundEnabled) {
         playTextToSpeech(responseText);
       }
       
     } catch (error) {
       console.warn("Gemini unavailable, falling back to Local AI");
-      // Fallback to Local AI if Gemini fails (Network/Key issues)
       try {
         const fallbackText = await generateLocalResponse(userMsg.text, state.language);
         const aiMsg: ChatMessage = {
@@ -153,7 +216,6 @@ const Chat: React.FC = () => {
     
     await generateSpeech(cleanText);
     
-    // Reset speaking state after a delay
     setTimeout(() => setIsSpeaking(false), 3000);
   };
 
@@ -224,16 +286,8 @@ const Chat: React.FC = () => {
     }
   };
 
-  const handleCopyChat = () => {
-    const chatText = messages.map(m => `${m.role === 'user' ? 'You' : 'KUBA'}: ${m.text}`).join('\n\n');
-    navigator.clipboard.writeText(chatText).then(() => {
-        alert("Chat copied! Go roast your friends.");
-    }).catch(err => console.error(err));
-  };
-
   const handleFeedback = async (msgId: string, type: 'up' | 'down') => {
     setMessages(prev => prev.map(msg => msg.id === msgId ? { ...msg, feedback: type } : msg));
-    // Silent feedback submission
     try {
         await fetch('/api/feedback', {
             method: 'POST',
@@ -243,7 +297,6 @@ const Chat: React.FC = () => {
     } catch (e) {}
   };
 
-  // Chaos Visuals
   const getChaosBadge = (id: string) => {
     const badges = ['🤡', '🎤', '💩', '🥁', '🤪', '🎸', '🤣', '👻'];
     return badges[parseInt(id.slice(-3)) % badges.length];
@@ -259,7 +312,6 @@ const Chat: React.FC = () => {
           <span className="text-gray-400 font-mono">QUOTA: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
         </div>
         
-        {/* Voice Menu / Sound Toggle */}
         <button 
           onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
           className={`p-2 rounded-lg text-xs font-bold transition-all border ${
@@ -312,12 +364,11 @@ const Chat: React.FC = () => {
                 </div>
               )}
 
-              {/* Message Content */}
               <p className={`leading-relaxed whitespace-pre-wrap ${msg.role === 'model' ? 'font-mono font-bold text-base italic' : ''}`}>
                 {msg.text}
               </p>
               
-              {/* Sources - Search Grounding */}
+              {/* Sources */}
               {msg.sources && msg.sources.length > 0 && (
                 <div className="mt-3 pt-2 border-t border-gray-300">
                   <p className="text-[10px] text-gray-500 font-bold mb-1 uppercase tracking-wider">🔎 I FOUND THIS ON THE NET:</p>
@@ -337,7 +388,6 @@ const Chat: React.FC = () => {
                 </div>
               )}
 
-              {/* Timestamp & Speaker */}
               <div className="flex justify-between items-center mt-2">
                 {msg.role === 'model' && (
                   <button 
@@ -366,7 +416,7 @@ const Chat: React.FC = () => {
         {isLoading && (
           <div className="flex justify-start relative z-10 pl-2">
              <div className="bg-white text-black p-4 rounded-2xl rounded-tl-none text-xs font-mono font-black animate-wiggle shadow-[6px_6px_0px_0px_#000] border-4 border-black rotate-1">
-               ✍️ COMPOSING A SICK RHYME...
+               {isRecording ? "👂 LISTENING..." : "✍️ COMPOSING A SICK RHYME..."}
              </div>
           </div>
         )}
@@ -378,16 +428,16 @@ const Chat: React.FC = () => {
         <div className="flex gap-2">
           {state.dailyQuota > 0 ? (
             <>
-              {/* Mic Button */}
+              {/* Mic Button - Toggle Record */}
               <button
-                onClick={handleSpeechInput}
+                onClick={toggleRecording}
                 className={`w-14 h-full rounded-xl font-black text-2xl border-4 border-gray-700 flex items-center justify-center transition-all ${
-                  isListening 
-                    ? 'bg-red-600 text-white animate-pulse border-red-800 scale-105' 
+                  isRecording 
+                    ? 'bg-red-600 text-white animate-pulse border-red-800 scale-105 shadow-[0_0_15px_red]' 
                     : 'bg-gray-900 text-white active:scale-95'
                 }`}
               >
-                {isListening ? '👂' : '🎙️'}
+                {isRecording ? '⏹' : '🎙️'}
               </button>
 
               <input 
@@ -395,13 +445,13 @@ const Chat: React.FC = () => {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder={isListening ? "Listening..." : "Type or Talk..."}
-                disabled={isLoading}
+                placeholder={isRecording ? "Recording Audio..." : "Type or Tap Mic..."}
+                disabled={isLoading || isRecording}
                 className="flex-grow bg-black/90 text-white border-4 border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-kuba-yellow focus:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all font-bold"
               />
               <button 
                 onClick={() => handleSendMessage()}
-                disabled={isLoading}
+                disabled={isLoading || isRecording}
                 className="px-5 rounded-xl font-black transition-all text-xl border-4 bg-kuba-yellow text-black border-black shadow-[4px_4px_0px_0px_#fff] active:translate-x-1 active:translate-y-1 active:shadow-none hover:-translate-y-1"
               >
                 ➤
