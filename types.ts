@@ -5,6 +5,7 @@ export interface ChatMessage {
   text: string;
   timestamp: number;
   feedback?: 'up' | 'down';
+  sources?: { title: string; uri: string }[];
 }
 
 export interface AppState {
