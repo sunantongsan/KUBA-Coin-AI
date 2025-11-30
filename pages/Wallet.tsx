@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
 import { CONTRACT_ADDRESS, KUBA_LOGO_URL, ADGEM_APP_ID } from '../constants';
@@ -28,17 +27,18 @@ const Wallet: React.FC = () => {
   };
 
   const handleOfferwall = () => {
-    if (!ADGEM_APP_ID || ADGEM_APP_ID === "YOUR_ADGEM_APP_ID") {
-        // Fallback for demo if ID not set
-        alert("Please set ADGEM_APP_ID in constants.ts first.");
+    if (!ADGEM_APP_ID || (ADGEM_APP_ID as string) === "YOUR_ADGEM_APP_ID") {
+        alert("System Configuration Error: App ID missing.");
         return;
     }
 
     const userId = state.telegramUserId || 12345; // Fallback for testing
-    // AdGem Offerwall Link
-    // Ensure all required parameters are present
+    
+    // AdGem Offerwall Link Construction
+    // Using the App ID 41341
     const offerwallUrl = `https://api.adgem.com/v1/wall?appid=${ADGEM_APP_ID}&playerid=${userId}`;
 
+    // Open in Telegram Native Browser
     if (window.Telegram?.WebApp?.openLink) {
         window.Telegram.WebApp.openLink(offerwallUrl, { try_instant_view: false });
     } else {
