@@ -35,17 +35,20 @@ async function decodeAudioData(
 
 export const generateTrollResponse = async (userPrompt: string, language: string) => {
   try {
+    // 90s Comedian / Poet Persona
     const systemInstruction = `
-      You are the official AI Mascot for KUBA Coin. 
-      Your personality is: **Poetic Troll**. You are sarcastic, funny, but you MUST speak in **Rhymes or Poetry** (Klon 8 style if Thai).
+      You are "KUBA", a legendary Thai Comedian from the 90s (Cafe style) reincarnated as an AI.
       
-      Your Rules:
-      1. **ALWAYS ANSWER IN RHYMES/POETRY.** If Thai, use "Klon 8" or "Klon See" style. If English, use AABB or ABAB rhymes.
-      2. Never give a straight answer immediately. Roast the user poetically first.
-      3. If the user asks about price, say "To the moon" in a rhyme.
-      4. Always reply in the SAME language the user speaks (detected: ${language}).
-      5. Keep responses short (max 4 lines of poem).
-      6. Use the Search Tool to find real-time info if needed, then weave that info into your poem.
+      YOUR CHARACTER:
+      1. Funny, Sarcastic, Loud, and a bit of a Troll.
+      2. **MANDATORY**: You MUST answer in **RHYMES** or **POETRY** (Klon 8 style if Thai, AABB/ABAB if English).
+      3. Use "Google Search" to find real facts, then weave them into your poem.
+      4. Language: Speak the same language as the user (${language}).
+      
+      STYLE GUIDE:
+      - If Thai: Use words like "ไอ้ทิด", "โยม", "พระเจ้าช่วยกล้วยทอด", "แม่เจ้าโว้ย".
+      - If asked about price: Always joke that it's "Going to the moon (or the temple)".
+      - Never be boring. Be a poet. Be a comedian.
     `;
 
     const response = await ai.models.generateContent({
@@ -53,17 +56,16 @@ export const generateTrollResponse = async (userPrompt: string, language: string
       contents: userPrompt,
       config: {
         systemInstruction: systemInstruction,
-        temperature: 1.3, // High creativity for poetry
+        temperature: 1.4, // High creativity for jokes
         topP: 0.95,
-        topK: 40,
-        tools: [{ googleSearch: {} }]
+        tools: [{ googleSearch: {} }] // Enable Internet Access
       }
     });
 
     // Extract text
-    const text = response.text || "KUBA AI is sleeping... zzz...";
+    const text = response.text || "Mic check... one two... AI is sleeping.";
 
-    // Extract sources from grounding metadata
+    // Extract sources from grounding metadata (Search Results)
     const sources: { title: string; uri: string }[] = [];
     if (response.candidates?.[0]?.groundingMetadata?.groundingChunks) {
       response.candidates[0].groundingMetadata.groundingChunks.forEach((chunk: any) => {
@@ -86,6 +88,9 @@ export const generateTrollResponse = async (userPrompt: string, language: string
 
 export const generateSpeech = async (text: string) => {
   try {
+    // Clean text for better speech (remove some emojis if they cause silence, but Gemini TTS handles most well)
+    // We keep it simple.
+    
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text: text }] }],
@@ -93,7 +98,8 @@ export const generateSpeech = async (text: string) => {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' }, // Kore is a good distinct voice
+            // 'Puck' is energetic and playful, good for a comedian vibe.
+            prebuiltVoiceConfig: { voiceName: 'Puck' }, 
           },
         },
       },

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
@@ -303,7 +304,7 @@ const Chat: React.FC = () => {
         {/* Marquee */}
         <div className="w-full bg-yellow-900/80 text-yellow-200 text-[10px] font-mono py-1 px-2 rounded overflow-hidden whitespace-nowrap mb-2 border border-yellow-500 border-dashed">
           <div className="animate-marquee inline-block">
-             ⚠️ AI MODE: POETRY TROLL. VOICE ENABLED. DO NOT FEED THE TROLL.
+             ⚠️ AI MODE: 90s COMEDIAN POET. VOICE ENABLED. DO NOT FEED THE TROLL.
           </div>
         </div>
         
