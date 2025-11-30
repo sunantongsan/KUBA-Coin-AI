@@ -64,7 +64,7 @@ const Chat: React.FC = () => {
 
   const handleSendMedia = async (file: File) => {
     if (state.dailyQuota <= 0) {
-      handleWatchAd();
+      handleWatchAd(false); // Prompt user
       return;
     }
 
@@ -131,7 +131,7 @@ const Chat: React.FC = () => {
     
     if (!textToSend.trim()) return;
     if (state.dailyQuota <= 0) {
-      handleWatchAd();
+      handleWatchAd(false); // Prompt user
       return;
     }
 
@@ -187,32 +187,35 @@ const Chat: React.FC = () => {
     }
   };
 
-  const handleWatchAd = async () => {
-    // Monetag Direct Link Implementation
-    if (window.confirm("Quota หมดแล้วจ้า! ไปดูโฆษณาแก้เซ็งสักแป๊บมั้ย? (Open Ad Link to get +3 Chats)")) {
-      
-      // Use Telegram's openLink for better compatibility (requires v6.4+), fallback to window.open
-      if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
-        window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
-      } else {
-        window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
+  const handleWatchAd = async (direct: boolean = true) => {
+    // If not direct (triggered by typing), confirm first
+    if (!direct) {
+      if (!window.confirm("Quota หมดแล้วจ้า! ไปดูโฆษณาแก้เซ็งสักแป๊บมั้ย? (Open Ad Link to get +3 Chats)")) {
+        return;
       }
-
-      // Simulate reward grant logic
-      setIsLoading(true);
-      setTimeout(() => {
-        addQuota();
-        setIsLoading(false);
-        playSoundEffect('game'); // Success Sound
-        // Show success message
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'model',
-          text: `เยี่ยมมากไอ้ทิด! ได้โควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้งแล้ว\n(Great job! Quota replenished.)`,
-          timestamp: Date.now()
-        }]);
-      }, 3000);
     }
+      
+    // Use Telegram's openLink for better compatibility (requires v6.4+), fallback to window.open
+    if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
+      window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
+    } else {
+      window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
+    }
+
+    // Simulate reward grant logic
+    setIsLoading(true);
+    setTimeout(() => {
+      addQuota();
+      setIsLoading(false);
+      playSoundEffect('game'); // Success Sound
+      // Show success message
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'model',
+        text: `เยี่ยมมากไอ้ทิด! ได้โควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้งแล้ว\n(Great job! Quota replenished.)`,
+        timestamp: Date.now()
+      }]);
+    }, 5000); // 5 seconds wait
   };
 
   const handleShare = () => {
@@ -480,7 +483,7 @@ const Chat: React.FC = () => {
             </>
           ) : (
             <button 
-              onClick={handleWatchAd}
+              onClick={() => handleWatchAd(true)}
               className="w-full bg-green-600 text-white font-black py-4 rounded-xl shadow-[4px_4px_0px_0px_#000] active:shadow-none active:translate-y-1 transition-all uppercase animate-pulse border-4 border-green-800 flex items-center justify-center gap-2"
             >
               🚀 CLICK TO SUPPORT (GET +3)
