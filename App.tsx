@@ -15,6 +15,7 @@ interface AppContextType {
   decrementQuota: () => void;
   addQuota: () => void;
   setLanguage: (lang: string) => void;
+  setSelectedVoice: (voice: string) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -51,12 +52,16 @@ const App: React.FC = () => {
       dailyQuota: INITIAL_QUOTA,
       lastResetDate: today,
       hasSeenAdToday: false,
-      language: tgUser?.language_code || navigator.language || 'en-US'
+      language: tgUser?.language_code || navigator.language || 'en-US',
+      selectedVoice: 'Puck' // Default Voice
     };
 
     if (saved) {
       const parsed = JSON.parse(saved);
       const mergedState = { ...parsed, telegramUserId: userId, telegramUsername: defaultState.telegramUsername };
+      // Ensure new fields exist if loading old state
+      if (!mergedState.selectedVoice) mergedState.selectedVoice = 'Puck';
+      
       if (parsed.lastResetDate !== today) {
         return { ...mergedState, dailyQuota: INITIAL_QUOTA, lastResetDate: today, hasSeenAdToday: false };
       }
@@ -82,10 +87,6 @@ const App: React.FC = () => {
 
           // If server balance is higher (due to AdGem rewards), update local state
           setState(prev => {
-             // We prioritize server balance ONLY if it's an update from Offerwall.
-             // Since this is a simple example, we simply ADD the server balance to local 
-             // or replace if implementation logic dictates. 
-             // To keep it simple: Use the server balance if it's non-zero and greater than local.
              if (data.balance > prev.balance) {
                return { ...prev, balance: data.balance };
              }
@@ -123,8 +124,12 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, language: lang }));
   };
 
+  const setSelectedVoice = (voice: string) => {
+    setState(prev => ({ ...prev, selectedVoice: voice }));
+  };
+
   return (
-    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage }}>
+    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage, setSelectedVoice }}>
       <HashRouter>
         <StartupRedirect />
         <Layout>

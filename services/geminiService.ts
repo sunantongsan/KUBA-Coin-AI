@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Modality } from "@google/genai";
 
 // The API key must be obtained exclusively from the environment variable process.env.API_KEY
@@ -115,7 +116,7 @@ export const generateTrollResponse = async (
   }
 };
 
-export const generateSpeech = async (text: string) => {
+export const generateSpeech = async (text: string, voiceName: string = 'Puck') => {
   try {
     // Clean text: Remove emojis and special chars that might break TTS flow
     const cleanText = text.replace(/[*_#]/g, '').trim(); 
@@ -127,8 +128,7 @@ export const generateSpeech = async (text: string) => {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            // 'Puck' is energetic and playful, perfect for a comedian.
-            prebuiltVoiceConfig: { voiceName: 'Puck' }, 
+            prebuiltVoiceConfig: { voiceName: voiceName }, 
           },
         },
       },

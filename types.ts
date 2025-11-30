@@ -19,6 +19,7 @@ export interface AppState {
   lastResetDate: string;
   hasSeenAdToday: boolean;
   language: string;
+  selectedVoice: string; // New field for voice selection
 }
 
 export interface AdConfig {

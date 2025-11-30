@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
@@ -6,18 +7,27 @@ import { ChatMessage } from '../types';
 import { AD_URL, INTERACTION_REWARD, ADSGRAM_BLOCK_ID, TELEGRAM_BOT_USERNAME } from '../constants';
 
 const Chat: React.FC = () => {
-  const { state, decrementQuota, addQuota, incrementBalance } = useAppContext();
+  const { state, decrementQuota, addQuota, incrementBalance, setSelectedVoice } = useAppContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false); // Changed from isListening to isRecording
+  const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true); 
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  // 90s Thai Comedian Voice Options
+  const voiceOptions = [
+    { id: 'Puck', name: 'Nong Joke', desc: 'Energetic & Prankster (High Energy)', icon: '🤪', color: 'bg-yellow-500' },
+    { id: 'Fenrir', name: 'Uncle Kom', desc: 'Deep, Raspy & Aggressive (Hard Roast)', icon: '🤬', color: 'bg-red-700' },
+    { id: 'Charon', name: 'Boss Thep', desc: 'Serious, Deep & Deadpan', icon: '🕶️', color: 'bg-blue-900' },
+    { id: 'Zephyr', name: 'Je Mam', desc: 'Sassy, Fast & High-pitched', icon: '💃', color: 'bg-pink-500' },
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -88,7 +98,6 @@ const Chat: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        // Remove data url prefix (e.g. "data:audio/webm;base64,")
         const base64Data = base64String.split(',')[1];
         resolve(base64Data);
       };
@@ -103,7 +112,6 @@ const Chat: React.FC = () => {
       return;
     }
 
-    // Add placeholder user message
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -118,7 +126,6 @@ const Chat: React.FC = () => {
         const base64Data = await blobToBase64(audioBlob);
         const mimeType = audioBlob.type || 'audio/webm';
 
-        // Send Audio to Gemini
         const { text: responseText, sources } = await generateTrollResponse({ data: base64Data, mimeType }, state.language);
 
         const aiMsg: ChatMessage = {
@@ -211,10 +218,10 @@ const Chat: React.FC = () => {
     if (isSpeaking) return;
     setIsSpeaking(true);
     
-    // Remove emojis for better TTS reading
     const cleanText = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
     
-    await generateSpeech(cleanText);
+    // Pass selected voice from state
+    await generateSpeech(cleanText, state.selectedVoice);
     
     setTimeout(() => setIsSpeaking(false), 3000);
   };
@@ -229,15 +236,12 @@ const Chat: React.FC = () => {
           addQuota();
           alert("Success! +2 Chats added. 📺✅");
         } else {
-          console.log("Adsgram result:", result);
           alert("Ad skipped or failed. No quota added.");
         }
       } catch (error) {
-        console.error("Adsgram Error:", error);
         fallbackAd();
       }
     } else {
-      console.warn("Adsgram script not loaded");
       fallbackAd();
     }
   };
@@ -276,10 +280,9 @@ const Chat: React.FC = () => {
         backgroundColor: '#1a1a1a',
         ignoreElements: (element) => element.tagName === 'BUTTON' || element.tagName === 'INPUT'
       });
-      
       canvas.toBlob((blob) => {
         if (!blob) return;
-        alert("Snapshot taken! (Feature to share image directly coming soon)");
+        alert("Snapshot taken!");
       });
     } catch (e) {
       console.error("Snapshot failed", e);
@@ -306,30 +309,81 @@ const Chat: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
+      {/* Voice Selection Modal */}
+      {showVoiceModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 border-2 border-kuba-yellow rounded-2xl p-6 w-full max-w-sm relative shadow-2xl animate-bounce-slow">
+            <button 
+              onClick={() => setShowVoiceModal(false)}
+              className="absolute top-2 right-2 text-gray-400 hover:text-white text-xl"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-black text-kuba-yellow uppercase text-center mb-4 tracking-wider">
+              🎭 Select Comedian Voice
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {voiceOptions.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => {
+                    setSelectedVoice(v.id);
+                    setShowVoiceModal(false);
+                    playTextToSpeech("Test 1, 2, 3... Ha ha ha!");
+                  }}
+                  className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all active:scale-95 ${
+                    state.selectedVoice === v.id 
+                      ? 'border-white bg-kuba-yellow text-black shadow-[0_0_15px_gold]' 
+                      : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-500'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-full ${v.color} flex items-center justify-center text-2xl mb-2 shadow-inner border border-black/20`}>
+                    {v.icon}
+                  </div>
+                  <span className="font-bold text-sm">{v.name}</span>
+                  <span className="text-[10px] text-center opacity-80 leading-tight mt-1">{v.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Bar with Sound Toggle */}
       <div className="flex justify-between items-center mb-4 gap-2">
         <div className="bg-gray-800 rounded-lg p-2 flex-grow flex justify-between items-center text-sm shadow-inner border border-gray-700">
           <span className="text-gray-400 font-mono">QUOTA: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
         </div>
         
-        <button 
-          onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
-          className={`p-2 rounded-lg text-xs font-bold transition-all border ${
-            isSoundEnabled 
-              ? 'bg-kuba-yellow text-black border-black shadow-sm' 
-              : 'bg-gray-700 text-gray-400 border-gray-600'
-          }`}
-          title={isSoundEnabled ? "Mute Voice" : "Enable Voice"}
-        >
-          {isSoundEnabled ? '🔊 ON' : '🔇 OFF'}
-        </button>
+        {/* Voice Toggle */}
+        <div className="flex bg-gray-700 rounded-lg p-1 gap-1">
+          <button 
+            onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
+            className={`p-2 rounded-md text-xs font-bold transition-all ${
+              isSoundEnabled 
+                ? 'bg-kuba-yellow text-black shadow-sm' 
+                : 'text-gray-400'
+            }`}
+          >
+            {isSoundEnabled ? '🔊' : '🔇'}
+          </button>
+          {isSoundEnabled && (
+             <button 
+                onClick={() => setShowVoiceModal(true)}
+                className="p-2 rounded-md bg-gray-600 text-white text-xs hover:bg-gray-500 active:scale-90"
+                title="Change Voice"
+             >
+                🎭
+             </button>
+          )}
+        </div>
 
         <button onClick={handleSnapshot} className="bg-gray-700 text-gray-300 p-2 rounded-lg text-xs" title="Snapshot">📸</button>
         <button 
           onClick={handleShare}
           className="bg-blue-600 text-white p-2 rounded-lg font-bold text-xs shadow-md border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
         >
-          🚀 SHARE
+          🚀
         </button>
       </div>
 
@@ -345,7 +399,7 @@ const Chat: React.FC = () => {
         {/* Marquee */}
         <div className="w-full bg-yellow-900/80 text-yellow-200 text-[10px] font-mono py-1 px-2 rounded overflow-hidden whitespace-nowrap mb-2 border border-yellow-500 border-dashed">
           <div className="animate-marquee inline-block">
-             ⚠️ AI PERSONA: 90s COMEDIAN POET (ตลกคาเฟ่). VOICE: {isSoundEnabled ? 'ON' : 'OFF'}. PREPARE TO BE ROASTED.
+             ⚠️ AI PERSONA: 90s COMEDIAN POET (ตลกคาเฟ่). VOICE: {voiceOptions.find(v => v.id === state.selectedVoice)?.name || 'Nong Joke'}.
           </div>
         </div>
         
