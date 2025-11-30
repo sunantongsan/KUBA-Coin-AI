@@ -10,6 +10,7 @@ interface ResponseDatabase {
     keywords: { [key: string]: string[] };
     defaults: string[]; // Keep valid strings here
     chaos: string[];
+    greetings: string[]; // Initial greetings
   };
 }
 
@@ -58,6 +59,13 @@ const aiDatabase: ResponseDatabase = {
       'พูดจาภาษาคน หรือบ่นภาษาควาย',
       'พิมพ์อะไรมา อ่านแล้วปวดตับ',
       'ถามวัวตอบม้า ถามป้าตอบลุง'
+    ],
+    greetings: [
+      'มาอีกละ... งานการไม่มีทำเหรอ?',
+      'ไงมนุษย์ หวังว่าจะไม่ถามอะไรโง่ๆ นะ',
+      'กำลังจะนอนพอดี... มีไรว่ามา',
+      'เตรียมคำด่าไว้ให้แล้ว เข้ามาเลย',
+      'วันนี้พอร์ตแดงล่ะสิ ถึงมาคุยกับบอท'
     ]
   },
   'en-US': {
@@ -78,6 +86,13 @@ const aiDatabase: ResponseDatabase = {
       'Blah blah blah, yak yak yak.',
       'I am smart, you are dense.',
       'Error 404: Brain not found.'
+    ],
+    greetings: [
+      'Oh look, it\'s you again.',
+      'I was sleeping. This better be good.',
+      'Ready to lose some brain cells?',
+      'Wallet empty? Don\'t cry to me.',
+      'Make it quick, I have better things to do.'
     ]
   },
   'zh-CN': {
@@ -95,6 +110,12 @@ const aiDatabase: ResponseDatabase = {
     defaults: [
       '这是什么鸟语 听得我好无语',
       '此人多半有病 而且病得不轻'
+    ],
+    greetings: [
+      '又是你？没别的事做了吗？',
+      '有话快说，有屁快放',
+      '准备好被怼了吗？',
+      '今天亏了多少？说出来让我开心下'
     ]
   }
 };
@@ -179,6 +200,12 @@ async function fetchExternalTroll(lang: string): Promise<string | null> {
 }
 
 // --- MAIN AI ENGINE ---
+
+export const getGreeting = (lang: string): string => {
+  const db = aiDatabase[lang] || aiDatabase['en-US'];
+  const greetings = db.greetings || db.defaults;
+  return greetings[Math.floor(Math.random() * greetings.length)];
+};
 
 export const generateLocalResponse = async (text: string, userPreferredLang: string): Promise<string> => {
   // Simulate Thinking

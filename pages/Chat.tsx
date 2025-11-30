@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
-import { generateLocalResponse } from '../services/localAi';
+import { generateLocalResponse, getGreeting } from '../services/localAi';
 import { ChatMessage } from '../types';
 import { AD_URL, INTERACTION_REWARD } from '../constants';
 
@@ -19,6 +19,19 @@ const Chat: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initial Greeting Effect
+  useEffect(() => {
+    if (messages.length === 0) {
+      const greeting = getGreeting(state.language);
+      setMessages([{
+        id: 'init-greeting',
+        role: 'model',
+        text: greeting,
+        timestamp: Date.now()
+      }]);
+    }
+  }, []); // Only run once on mount
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -230,12 +243,6 @@ const Chat: React.FC = () => {
             ⚠️ WARNING: This AI is emotionally unstable. Do not take advice. KUBA to the moon! 🚀 &nbsp;&nbsp;&nbsp;&nbsp; ⚠️ WARNING: This AI is emotionally unstable. Do not take advice. KUBA to the moon! 🚀
           </div>
         </div>
-
-        {messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-10 italic relative z-10 animate-bounce">
-            "Ask me anything. I dare you." <br/> - KUBA AI 🤡
-          </div>
-        )}
         
         {messages.map((msg) => (
           <div key={msg.id} className={`flex flex-col relative z-10 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
