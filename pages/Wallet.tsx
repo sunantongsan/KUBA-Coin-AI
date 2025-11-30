@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
-import { CONTRACT_ADDRESS, KUBA_LOGO_URL } from '../constants';
+import { CONTRACT_ADDRESS, KUBA_LOGO_URL, ADGEM_APP_ID } from '../constants';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const Wallet: React.FC = () => {
@@ -26,6 +26,23 @@ const Wallet: React.FC = () => {
 
   const handleWithdraw = () => {
     alert("Withdrawal System Coming Soon! \nKeep accumulating KUBA. We will announce when the liquidity pool is ready.");
+  };
+
+  const handleOfferwall = () => {
+    if (ADGEM_APP_ID === "YOUR_ADGEM_APP_ID") {
+        alert("AdGem App ID not configured in constants.ts yet!");
+        return;
+    }
+
+    const userId = state.telegramUserId || 'guest';
+    // AdGem Offerwall URL Format
+    const offerwallUrl = `https://api.adgem.com/v1/wall?appid=${ADGEM_APP_ID}&playerid=${userId}`;
+
+    if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(offerwallUrl, { try_instant_view: false });
+    } else {
+        window.open(offerwallUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleGenerateMascot = () => {
@@ -119,7 +136,15 @@ const Wallet: React.FC = () => {
         </div>
       </div>
 
-      {/* Action Buttons: Withdraw */}
+      {/* AdGem Offerwall Button */}
+      <button 
+        onClick={handleOfferwall}
+        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black py-4 rounded-xl shadow-[0_0_15px_rgba(124,58,237,0.5)] active:scale-95 transition-all uppercase flex items-center justify-center gap-2 border-2 border-purple-400"
+      >
+        <span>💎</span> Earn FREE COINS (Offerwall)
+      </button>
+
+      {/* Action Buttons: Withdraw & Chart */}
       <div className="w-full grid grid-cols-2 gap-3">
          <button 
            className="bg-gray-700 text-gray-400 font-bold py-3 rounded-xl cursor-not-allowed border border-gray-600 flex flex-col items-center justify-center"
