@@ -2,35 +2,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
-import { generateTrollResponse, generateSpeech } from '../services/geminiService';
-import { playSoundEffect } from '../services/audioEffects'; // Import Sound FX Engine
+import { generateTrollResponse } from '../services/geminiService'; // TTS Removed
+import { playSoundEffect } from '../services/audioEffects'; 
 import { ChatMessage } from '../types';
 import { MONETAG_DIRECT_LINK, INTERACTION_REWARD, TELEGRAM_BOT_USERNAME, AD_REWARD_QUOTA } from '../constants';
 
 const Chat: React.FC = () => {
-  const { state, decrementQuota, addQuota, incrementBalance, setSelectedVoice, setSoundMode } = useAppContext();
+  const { state, decrementQuota, addQuota, incrementBalance, setSoundMode } = useAppContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isDictating, setIsDictating] = useState(false); // New state for text dictation
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // 90s Thai Comedian Voice Options
-  const voiceOptions = [
-    { id: 'Puck', name: 'Nong Joke', desc: 'Energetic & Prankster', icon: '🤪', color: 'bg-yellow-500' },
-    { id: 'Fenrir', name: 'Uncle Kom', desc: 'Deep, Raspy & Aggressive', icon: '🤬', color: 'bg-red-700' },
-    { id: 'Charon', name: 'Boss Thep', desc: 'Serious, Deep & Deadpan', icon: '🕶️', color: 'bg-blue-900' },
-    { id: 'Zephyr', name: 'Je Mam', desc: 'Sassy, Fast & High-pitched', icon: '💃', color: 'bg-pink-500' },
-  ];
 
   // Sound Effect Modes
   const sfxOptions = [
@@ -62,96 +49,6 @@ const Chat: React.FC = () => {
     }
   }, []);
 
-  // --- AUDIO MESSAGE RECORDING ---
-  const handleStartRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        // Stop all tracks to release microphone
-        stream.getTracks().forEach(track => track.stop());
-        handleSendMedia(audioBlob, 'audio');
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Error accessing microphone:", err);
-      alert("Cannot access microphone. Please check your browser or Telegram permissions.");
-    }
-  };
-
-  const handleStopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const toggleRecording = () => {
-    if (isRecording) {
-      handleStopRecording();
-    } else {
-      handleStartRecording();
-    }
-  };
-
-  // --- TEXT DICTATION (SPEECH-TO-TEXT) ---
-  const handleDictation = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      alert("Voice typing is not supported on this browser/device. Try using the keyboard's voice input.");
-      return;
-    }
-
-    if (isDictating) return; // Prevent double clicks
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = state.language; // Use app language
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      setIsDictating(true);
-      playSoundEffect('game');
-    };
-
-    recognition.onend = () => {
-      setIsDictating(false);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("Dictation error", event.error);
-      setIsDictating(false);
-      if (event.error === 'not-allowed') {
-        alert("Microphone permission denied.");
-      }
-    };
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInputText(prev => (prev ? prev + ' ' : '') + transcript);
-    };
-
-    try {
-        recognition.start();
-    } catch(e) {
-        console.error("Failed to start dictation", e);
-        setIsDictating(false);
-    }
-  };
-
   const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -165,23 +62,23 @@ const Chat: React.FC = () => {
     });
   };
 
-  const handleSendMedia = async (blob: Blob, type: 'audio' | 'image') => {
+  const handleSendMedia = async (file: File) => {
     if (state.dailyQuota <= 0) {
       handleWatchAd();
       return;
     }
 
-    const base64Data = await blobToBase64(blob);
-    const mimeType = blob.type || (type === 'audio' ? 'audio/webm' : 'image/jpeg');
-    const displayUrl = URL.createObjectURL(blob);
+    const base64Data = await blobToBase64(file);
+    const mimeType = file.type;
+    const displayUrl = URL.createObjectURL(file);
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      text: type === 'audio' ? "🎤 Voice Message" : "📷 Image Upload",
+      text: "📷 Image Upload",
       timestamp: Date.now(),
       attachment: {
-        type: type,
+        type: 'image',
         url: displayUrl,
         mimeType: mimeType
       }
@@ -191,6 +88,7 @@ const Chat: React.FC = () => {
     decrementQuota();
 
     try {
+        // Send Image to Gemini
         const { text: responseText, sources } = await generateTrollResponse({ data: base64Data, mimeType }, state.language);
 
         const aiMsg: ChatMessage = {
@@ -204,17 +102,16 @@ const Chat: React.FC = () => {
         setMessages(prev => [...prev, aiMsg]);
         incrementBalance(INTERACTION_REWARD);
 
-        // Play SFX & Speech
+        // Play SFX only
         if (isSoundEnabled) {
           playSoundEffect(state.soundMode);
-          playTextToSpeech(responseText);
         }
     } catch (error) {
         console.error("Media processing failed", error);
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'model',
-            text: "My brain failed to process that. Try again!",
+            text: "My brain failed to process that image. Try again!",
             timestamp: Date.now()
         }]);
     } finally {
@@ -225,7 +122,7 @@ const Chat: React.FC = () => {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      handleSendMedia(file, 'image');
+      handleSendMedia(file);
     }
   };
 
@@ -264,10 +161,9 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, aiMsg]);
       incrementBalance(INTERACTION_REWARD);
 
-      // Play SFX & Speech
+      // Play SFX
       if (isSoundEnabled) {
         playSoundEffect(state.soundMode);
-        playTextToSpeech(responseText);
       }
       
     } catch (error) {
@@ -289,18 +185,6 @@ const Chat: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const playTextToSpeech = async (text: string) => {
-    if (isSpeaking) return;
-    setIsSpeaking(true);
-    
-    const cleanText = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
-    
-    // Pass selected voice from state
-    await generateSpeech(cleanText, state.selectedVoice);
-    
-    setTimeout(() => setIsSpeaking(false), 3000);
   };
 
   const handleWatchAd = async () => {
@@ -376,7 +260,7 @@ const Chat: React.FC = () => {
   };
 
   const getChaosBadge = (id: string) => {
-    const badges = ['🤡', '🎤', '💩', '🥁', '🤪', '🎸', '🤣', '👻'];
+    const badges = ['🤡', '🤪', '💩', '🥁', '👺', '👻'];
     return badges[parseInt(id.slice(-3)) % badges.length];
   };
 
@@ -384,7 +268,7 @@ const Chat: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
-      {/* Studio Settings Modal (Voice & Sound) */}
+      {/* Studio Settings Modal (SFX Only) */}
       {showVoiceModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-gray-900 border-2 border-kuba-yellow rounded-2xl p-6 w-full max-w-sm relative shadow-2xl animate-bounce-slow max-h-[90vh] overflow-y-auto">
@@ -395,38 +279,12 @@ const Chat: React.FC = () => {
               ✕
             </button>
             <h3 className="text-xl font-black text-kuba-yellow uppercase text-center mb-4 tracking-wider border-b border-gray-700 pb-2">
-              🎙️ Studio Settings
+              ⚙️ Studio FX
             </h3>
             
-            {/* Voice Selection */}
-            <div className="mb-6">
-              <h4 className="text-white font-bold mb-2 text-sm uppercase">1. Choose Persona</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {voiceOptions.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => {
-                      setSelectedVoice(v.id);
-                      playTextToSpeech("Test 1, 2, 3... Ha ha ha!");
-                    }}
-                    className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all active:scale-95 ${
-                      state.selectedVoice === v.id 
-                        ? 'border-white bg-kuba-yellow text-black shadow-[0_0_15px_gold]' 
-                        : 'border-gray-700 bg-gray-800 text-gray-300'
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-full ${v.color} flex items-center justify-center text-lg mb-1 shadow-inner border border-black/20`}>
-                      {v.icon}
-                    </div>
-                    <span className="font-bold text-xs">{v.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Sound Effect Selection */}
             <div>
-              <h4 className="text-white font-bold mb-2 text-sm uppercase">2. Sound Effects</h4>
+              <h4 className="text-white font-bold mb-2 text-sm uppercase">Sound Effects</h4>
               <div className="space-y-2">
                 {sfxOptions.map((sfx) => (
                    <button
@@ -462,7 +320,7 @@ const Chat: React.FC = () => {
           <span className="text-gray-400 font-mono">QUOTA: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
         </div>
         
-        {/* Voice/Sound Settings Toggle */}
+        {/* Sound Settings Toggle */}
         <div className="flex bg-gray-700 rounded-lg p-1 gap-1">
           <button 
             onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
@@ -505,7 +363,7 @@ const Chat: React.FC = () => {
         {/* Marquee */}
         <div className="w-full bg-yellow-900/80 text-yellow-200 text-[10px] font-mono py-1 px-2 rounded overflow-hidden whitespace-nowrap mb-2 border border-yellow-500 border-dashed">
           <div className="animate-marquee inline-block">
-             ⚠️ AI PERSONA: 90s COMEDIAN. VOICE: {voiceOptions.find(v => v.id === state.selectedVoice)?.name}. SFX: {sfxOptions.find(s => s.id === state.soundMode)?.name}.
+             ⚠️ AI PERSONA: 90s COMEDIAN. SFX: {sfxOptions.find(s => s.id === state.soundMode)?.name}.
           </div>
         </div>
         
@@ -527,9 +385,6 @@ const Chat: React.FC = () => {
               {/* Attachment Display */}
               {msg.attachment && msg.attachment.type === 'image' && (
                 <img src={msg.attachment.url} alt="Uploaded" className="w-full rounded-lg mb-2 border-2 border-black" />
-              )}
-              {msg.attachment && msg.attachment.type === 'audio' && (
-                <div className="text-xs mb-1 italic">🎤 Audio Clip Sent</div>
               )}
 
               <p className={`leading-relaxed whitespace-pre-wrap ${msg.role === 'model' ? 'font-mono font-bold text-base italic' : ''}`}>
@@ -557,18 +412,6 @@ const Chat: React.FC = () => {
               )}
 
               <div className="flex justify-between items-center mt-2">
-                {msg.role === 'model' && (
-                  <button 
-                    onClick={() => {
-                        playTextToSpeech(msg.text);
-                        playSoundEffect(state.soundMode);
-                    }}
-                    className={`opacity-60 hover:opacity-100 active:scale-90 transition-all text-lg ${isSpeaking ? 'animate-pulse text-red-500' : ''}`}
-                    title="Replay Audio"
-                  >
-                    🔊
-                  </button>
-                )}
                 <span className="text-[10px] opacity-40 font-mono font-bold tracking-widest uppercase ml-auto">
                   {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </span>
@@ -587,7 +430,7 @@ const Chat: React.FC = () => {
         {isLoading && (
           <div className="flex justify-start relative z-10 pl-2">
              <div className="bg-white text-black p-4 rounded-2xl rounded-tl-none text-xs font-mono font-black animate-wiggle shadow-[6px_6px_0px_0px_#000] border-4 border-black rotate-1">
-               {isRecording ? "👂 LISTENING..." : "✍️ COMPOSING A SICK RHYME..."}
+               ✍️ COMPOSING A SICK RHYME...
              </div>
           </div>
         )}
@@ -615,44 +458,21 @@ const Chat: React.FC = () => {
                 🖼️
               </button>
 
-              {/* Mic Button - Toggle Record Audio Message */}
-              <button
-                onClick={toggleRecording}
-                className={`w-14 h-full rounded-xl font-black text-2xl border-4 border-gray-700 flex items-center justify-center transition-all ${
-                  isRecording 
-                    ? 'bg-red-600 text-white animate-pulse border-red-800 scale-105 shadow-[0_0_15px_red]' 
-                    : 'bg-gray-900 text-white active:scale-95'
-                }`}
-                title="Hold for Voice Message"
-              >
-                {isRecording ? '⏹' : '🎙️'}
-              </button>
-
               <div className="flex-grow relative">
                 <input 
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder={isRecording ? "Recording Audio..." : isDictating ? "Listening for text..." : "Type or click mic..."}
-                  disabled={isLoading || isRecording || isDictating}
-                  className={`w-full h-full bg-black/90 text-white border-4 border-gray-700 rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:border-kuba-yellow focus:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all font-bold text-sm ${isDictating ? 'border-green-500 text-green-300' : ''}`}
+                  placeholder={"Type a message..."}
+                  disabled={isLoading}
+                  className={`w-full h-full bg-black/90 text-white border-4 border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-kuba-yellow focus:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all font-bold text-sm`}
                 />
-                
-                {/* Voice Dictation (Text) Button inside Input */}
-                <button
-                  onClick={handleDictation}
-                  disabled={isLoading || isRecording}
-                  className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-full hover:bg-gray-700 transition-colors ${isDictating ? 'text-green-400 animate-pulse' : 'text-gray-400'}`}
-                  title="Voice Typing (Dictation)"
-                >
-                  {isDictating ? '🛑' : '🎤'}
-                </button>
               </div>
 
               <button 
                 onClick={() => handleSendMessage()}
-                disabled={isLoading || isRecording}
+                disabled={isLoading}
                 className="px-5 rounded-xl font-black transition-all text-xl border-4 bg-kuba-yellow text-black border-black shadow-[4px_4px_0px_0px_#fff] active:translate-x-1 active:translate-y-1 active:shadow-none hover:-translate-y-1"
               >
                 ➤

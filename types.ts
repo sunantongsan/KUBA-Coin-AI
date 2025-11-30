@@ -7,7 +7,7 @@ export interface ChatMessage {
   feedback?: 'up' | 'down';
   sources?: { title: string; uri: string }[];
   attachment?: {
-    type: 'image' | 'audio';
+    type: 'image'; // Removed audio support
     url: string; // Base64 data URL for display
     mimeType: string;
   };
@@ -24,7 +24,7 @@ export interface AppState {
   lastResetDate: string;
   hasSeenAdToday: boolean;
   language: string;
-  selectedVoice: string;
+  // Removed selectedVoice
   soundMode: 'off' | 'comedy' | 'cartoon' | 'game' | 'laughter';
 }
 
@@ -36,8 +36,6 @@ export interface AdConfig {
 declare global {
   interface Window {
     html2canvas?: (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>;
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
     Telegram: {
       WebApp: {
         ready: () => void;
