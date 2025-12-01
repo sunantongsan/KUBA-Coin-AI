@@ -1,8 +1,13 @@
-
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 
-// The API key must be obtained exclusively from the environment variable process.env.API_KEY
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization to prevent crashes on module load if ENV is missing
+const getAiClient = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API_KEY is missing. Please check your Vercel Environment Variables.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 // Updated to support Text & Image only (Voice removed)
 export const generateTrollResponse = async (
@@ -10,6 +15,8 @@ export const generateTrollResponse = async (
   language: string
 ) => {
   try {
+    const ai = getAiClient();
+
     // MAXIMIZED TROLL PERSONA (Thai Cafe Style + Provocative)
     // Adjusted: Prioritize FACTS, Shorten POEMS.
     // Adjusted: Strict "Not Found" handling.
