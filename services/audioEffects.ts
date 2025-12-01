@@ -2,14 +2,18 @@
 // A lightweight procedural audio synthesizer using Web Audio API
 // No external MP3 files required.
 
-const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
 let audioCtx: AudioContext | null = null;
 
 const getCtx = () => {
+  if (typeof window === 'undefined') return null; // Safety check for SSR/Build
+
   if (!audioCtx) {
-    audioCtx = new AudioContextClass();
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+    }
   }
-  if (audioCtx.state === 'suspended') {
+  if (audioCtx && audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
   return audioCtx;
@@ -19,6 +23,7 @@ const getCtx = () => {
 export const playTungPoh = () => {
   try {
     const ctx = getCtx();
+    if (!ctx) return;
     const t = ctx.currentTime;
 
     // Snare (Noise)
@@ -80,6 +85,7 @@ export const playTungPoh = () => {
 export const playBoing = () => {
   try {
     const ctx = getCtx();
+    if (!ctx) return;
     const t = ctx.currentTime;
     
     const osc = ctx.createOscillator();
@@ -108,6 +114,7 @@ export const playBoing = () => {
 export const playCoin = () => {
   try {
     const ctx = getCtx();
+    if (!ctx) return;
     const t = ctx.currentTime;
 
     const osc = ctx.createOscillator();
@@ -131,6 +138,7 @@ export const playCoin = () => {
 export const playLaughter = () => {
   try {
     const ctx = getCtx();
+    if (!ctx) return;
     const t = ctx.currentTime;
     
     // Create 3 quick bursts to simulate "Ha Ha Ha"
