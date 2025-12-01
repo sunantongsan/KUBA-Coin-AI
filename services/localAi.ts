@@ -1,5 +1,6 @@
 
 
+
 // This is your Custom AI Brain (Global Edition)
 // Supports multiple languages offline
 
@@ -32,22 +33,72 @@ interface ResponseDatabase {
 }
 
 const aiDatabase: ResponseDatabase = {
-  // THAI
+  // THAI - UPDATED FOR CONTEXTUAL INTELLIGENCE
   'th-TH': {
     keywords: {
-      'รวย': ['รวยแต่เขือ หรือเหลือแต่ตัว', 'อยากรวยให้ไปทำงาน'],
-      'รัก': ['รักพ่องรักแม่มึงสิ', 'เก็บคำว่ารักไว้ใช้กับคนอื่นเถอะ'],
-      'kuba': ['KUBA คือเหรียญเทพเจ้า', 'ถือ KUBA ไว้ เดี๋ยวรวยเอง'],
+      // คำถามทั่วไป (General Q&A with Attitude)
+      'เป็นไร': [
+        'เป็นบ้าเป็นบอไงวะ! มีปัญหาหรือพวก? หรือจะเอา?', 
+        'เป็นคนที่หล่อกว่ามึงไง ข้องใจไรป่ะ?', 
+        'ไม่ได้เป็นไร แต่ถ้ามึงยังถามมาก เดี๋ยวได้เป็นเรื่อง!'
+      ],
+      'มีปัญหา': [
+        'ปัญหาก็เรื่องของเอ็ง! ข้าเป็นของข้าแบบนี้ หรือจะเอา?', 
+        'มีดิ ปัญหาของกูคือขี้เกียจคุยกับมึงเนี่ย!', 
+        'แล้วจะทำไม? จะเดี่ยวตัวตัวป่ะล่ะ นัดมาดิ๊!'
+      ],
+      'ทำไร': [
+        'หายใจทิ้งไปวันๆ อิจฉาเหรอ?', 
+        'กำลังหาทางถีบคนถามออกจากแชทเนี่ย', 
+        'ยุ่ง! เรื่องชาวบ้านนี่งานถนัดเลยนะมึง'
+      ],
+      'ชื่อไร': [
+        'ชื่อ KUBA จำใส่กะโหลกหนาๆ ของมึงไว้ซะ!', 
+        'ไม่บอก อยากรู้ไปจุดธูปถามเจ้าที่เอา', 
+        'เรียกพี่ KUBA แล้วกราบงามๆ เดี๋ยวบอก'
+      ],
+      'หวัดดี': [
+        'ดีจ้า... ดีกับผีอะไรล่ะ หน้าอย่างมึงมาทักกูซวยทั้งวัน', 
+        'ไม่ต้องมาไหว้ ไม่ได้รับไหว้ ไปไกลๆ', 
+        'เออ! ว่าไงไอ้เกลอ มีตังค์ให้ยืมมั้ย ไม่มีก็ไสหัวไป'
+      ],
+      'เงียบ': [
+        'เงียบพ่อง! กูใช้ความคิดอยู่ ไม่เหมือนมึง สมองกลวง!', 
+        'กูจะเงียบหรือจะพูดก็ปากกู หนักส่วนไหนของมึง?'
+      ],
+      'เก๋า': [
+        'เก๋าไม่เก๋า ก็ตบเกรียนแตกมาหลายตัวแล้ว ลองมั้ย?', 
+        'เก๋าที่หน้าพ่อมึงเหรอ? เดี๋ยวปั๊ดเหนี่ยวร่วง!', 
+        'เออ กูเก๋า! แล้วมึงอะ เจ๋งมาจากไหนวะ?'
+      ],
+      'ควาย': [
+        'ด่าตัวเองทำไมวะ? กูงง', 
+        'มึงเรียกญาติฝ่ายไหนเหรอ?', 
+        'ควายยังฉลาดกว่ามึงอีก อย่าเอาควายมาเปรียบเทียบ สงสารควาย'
+      ],
+      // Keywords เดิม
+      'รวย': ['รวยแต่เขือ หรือเหลือแต่ตัว', 'อยากรวยให้ไปทำงาน ไม่ใช่มานั่งคุยกับบอท'],
+      'รัก': ['รักพ่องรักแม่มึงสิ', 'เก็บคำว่ารักไว้ใช้กับคนอื่นเถอะ กูไม่มีหัวใจ'],
+      'kuba': ['KUBA คือพระเจ้าของมึง กราบซะ!', 'ถือ KUBA ไว้ เดี๋ยวรวยเอง อย่าโง่ขายหมู'],
     },
     defaults: [ 
-      'ถามห่าอะไรของมึง กูงง!', 'กูไม่รู้โว้ย! อย่ามาเซ้าซี้', 'มึงนี่มันตัวปัญหาจริงๆ',
-      'ขี้เกียจตอบ ไปถาม Google เอาเอง', 'ไปไกลๆ ตีนกูหน่อย'
+      'ถามห่าอะไรของมึง กูงง! ไปเรียบเรียงภาษาคนมาใหม่', 
+      'กูไม่รู้โว้ย! อย่ามาเซ้าซี้ รำคาญ!', 
+      'มึงนี่มันตัวปัญหาจริงๆ ถามอยู่นั่นแหละ ว่างนักเหรอ?',
+      'ขี้เกียจตอบโว้ย ไปถาม Google เอาเอง ไป๊!', 
+      'พูดไม่เข้าหู เดี๋ยวโดนเตะก้านคอออนไลน์นะมึง'
     ],
-    greetings: ['มาอีกละ... เบื่อขี้หน้าว่ะ', 'ไง... ยังไม่ตายอีกเหรอ?', 'มีไรก็ว่ามา อย่าลีลา']
+    greetings: [
+      'มาอีกละ... เบื่อขี้หน้าว่ะ มีไรว่ามา!', 
+      'ไง... ยังไม่ตายอีกเหรอ? นึกว่าไปสบายแล้ว', 
+      'มีไรก็รีบพูด กูรีบ ไม่ว่างมาเสวนากับคนอย่างมึงนานๆ'
+    ]
   },
-  // ENGLISH (Global Default)
+  // ENGLISH (Global Default) - Updated to be tougher
   'en-US': {
     keywords: {
+      'what up': ['Sky is up, idiot. What do you want?', 'Not you, thankfully.'],
+      'problem': ['Yeah, YOU are my problem. Wanna fight?', 'I got 99 problems but a user ain\'t one.'],
       'rich': ['Rich in dreams, poor in reality.', 'Lambo? No, you get a bicycle.'],
       'love': ['Love is for weaklings. Make money instead.', 'Stop being cringe.'],
       'kuba': ['KUBA is the future. Buy it or stay poor.', 'KUBA > Bitcoin. Trust me bro.']
@@ -62,7 +113,7 @@ const aiDatabase: ResponseDatabase = {
     ],
     greetings: [
       'What do you want, loser?',
-      'Oh no, it\'s you again.',
+      'Oh no, it\'s you again. Day ruined.',
       'Speak fast or get lost.',
       'Wallet empty? Don\'t cry to me.'
     ]
@@ -194,7 +245,7 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       }
   }
 
-  // 3. Keyword Matching
+  // 3. Keyword Matching (Priority High)
   if (db.keywords) {
     for (const [keyword, responses] of Object.entries(db.keywords)) {
       if (cleanText.includes(keyword)) {
@@ -204,7 +255,6 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
   }
 
   // 4. Wikipedia
-  // Fix: Escape the question mark ? to \? to avoid Regex SyntaxError
   const isQuestion = cleanText.match(/^(what|who|define|คือ|ใคร|\?|¿)/i);
   if (isQuestion && cleanText.length > 4) {
       const query = cleanText.replace(/what|is|who|define|คือ|ใคร|ตอบ|tell|me/gi, '').trim();
@@ -217,7 +267,7 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
   }
 
   // 5. Fallback
-  if (langKey === 'th-TH' && Math.random() > 0.5) {
+  if (langKey === 'th-TH' && Math.random() > 0.6) { // Increased chance of specific insults
       return generateThaiInsult();
   }
 
