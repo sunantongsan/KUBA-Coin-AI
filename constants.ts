@@ -1,5 +1,6 @@
 
 
+
 export const CONTRACT_ADDRESS = "EQDCCMpdq2lab20fVNcXTx44TrGfAnNDvWiFWt9wDfDUY5YT";
 export const KUBA_LOGO_URL = "https://iili.io/KbAT4Jp.png";
 export const MASCOT_IMAGE_URL = "https://picsum.photos/seed/kubamascot/200/200"; 

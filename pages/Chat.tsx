@@ -75,7 +75,7 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'model',
-        text: `✅ เยี่ยมมาก! ดูโฆษณาครบตามเวลา รับโควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้ง!`,
+        text: `✅ Awesome! Ad watched. Quota refilled by ${AD_REWARD_QUOTA}!`,
         timestamp: Date.now()
       }]);
     }, 500);
@@ -110,13 +110,13 @@ const Chat: React.FC = () => {
     });
   };
 
-  // Helper to get a random reward message (No Parentheses)
+  // Helper to get a random reward message (English)
   const getRewardMessage = () => {
     const msgs = [
-      "\n\nเอาไป 200 KUBA ค่าทำขวัญ",
-      "\n\nด่าเสร็จก็แจก... รับไป 200 KUBA ไป๊!",
-      "\n\nเอา 200 KUBA ไปแดกซะ",
-      "\n\nรับไป 200 KUBA... แล้วไสหัวไปนอนได้แล้ว"
+      "\n\nTake 200 KUBA for your feelings.",
+      "\n\nRoasting done... take your 200 KUBA!",
+      "\n\nHere is 200 KUBA, now get lost.",
+      "\n\n200 KUBA added. Don't spend it all at once."
     ];
     return msgs[Math.floor(Math.random() * msgs.length)];
   };
@@ -173,7 +173,7 @@ const Chat: React.FC = () => {
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'model',
-            text: "กูดูรูปไม่ได้โว้ย เน็ตเน่า!",
+            text: "Can't see this image! Net is trash.",
             timestamp: Date.now()
         }]);
     } finally {
@@ -237,7 +237,7 @@ const Chat: React.FC = () => {
         const fallbackText = await generateLocalResponse(userMsg.text, state.language);
         
         // Append reward text to fallback as well
-        const finalText = fallbackText + "\nAI สมองไหล 🐹" + getRewardMessage();
+        const finalText = fallbackText + "\nAI Brain Leak 🐹" + getRewardMessage();
 
         const aiMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -259,7 +259,7 @@ const Chat: React.FC = () => {
   const handleWatchAd = async (direct: boolean = true) => {
     // If not direct (triggered by typing), confirm first
     if (!direct) {
-      if (!window.confirm("Quota หมดแล้วจ้า! ไปดูโฆษณาแก้เซ็งสักแป๊บมั้ย? (Open Ad Link to get +5 Chats)")) {
+      if (!window.confirm("Quota exhausted! Watch an ad to refill +2 Chats?")) {
         return;
       }
     }
@@ -283,14 +283,14 @@ const Chat: React.FC = () => {
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'model',
-      text: `🎉 สุดยอด! ว่างจัดจริงๆ ดูโฆษณาครบ ${DAILY_AD_TARGET} รอบ\nรับไปเลย ${DAILY_MISSION_REWARD} KUBA!`,
+      text: `🎉 Amazing! Daily Mission Complete. You watched ${DAILY_AD_TARGET} ads.\nHere is ${DAILY_MISSION_REWARD} KUBA!`,
       timestamp: Date.now()
     }]);
   };
 
   const handleShare = () => {
     const appUrl = `https://t.me/${TELEGRAM_BOT_USERNAME}`; 
-    const shareText = "This KUBA AI is roasting me in poems! 🤣 Come earn coins.";
+    const shareText = "This KUBA AI is roasting me! 🤣 Come earn coins.";
     const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`;
 
     if (window.Telegram?.WebApp?.openTelegramLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
@@ -350,14 +350,14 @@ const Chat: React.FC = () => {
         <div className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-6 text-center animate-fade-in pointer-events-auto">
             <div className="text-6xl mb-6 animate-spin-reverse">⏳</div>
             <h2 className="text-2xl font-black text-kuba-yellow mb-2 uppercase tracking-widest">
-              กำลังยืนยันโฆษณา...
+              Verifying Ad...
             </h2>
             <div className="text-[120px] font-mono font-black text-white leading-none mb-6">
               {adCountdown}
             </div>
             <p className="text-red-500 font-bold text-sm animate-pulse max-w-xs bg-red-900/20 p-4 rounded-xl border border-red-800">
-              ⚠️ ห้ามปิดหน้านี้! <br/>
-              กรุณารอให้ครบเวลาเพื่อให้ระบบตรวจสอบความถูกต้อง
+              ⚠️ Do not close! <br/>
+              Please wait for validation to complete.
             </p>
             <div className="mt-8 w-64 h-4 bg-gray-800 rounded-full overflow-hidden border-2 border-gray-600">
                <div 
@@ -504,7 +504,7 @@ const Chat: React.FC = () => {
         {/* Marquee */}
         <div className="w-full bg-yellow-900/80 text-yellow-200 text-[10px] font-mono py-1 px-2 rounded overflow-hidden whitespace-nowrap mb-2 border border-yellow-500 border-dashed">
           <div className="animate-marquee inline-block">
-             ⚠️ AI PERSONA: THAI KEYBOARD GANGSTER. SFX: {sfxOptions.find(s => s.id === state.soundMode)?.name}.
+             ⚠️ AI PERSONA: GLOBAL GANGSTER. SFX: {sfxOptions.find(s => s.id === state.soundMode)?.name}.
           </div>
         </div>
         
