@@ -63,18 +63,16 @@ const Home: React.FC = () => {
         }
         break;
       case 'x':
-        // Replaced raw image URL with the specific Official X Status Link as requested
-        const xStatusLink = "https://x.com/KubacoinAirdrop/status/1987437597522866263?s=20";
-        const xText = encodeURIComponent(`${text}\n\n${xStatusLink}\n\n@KubacoinAirdrop #KUBA #Airdrop #Crypto`);
+        // Updated: Only share text and the Bot Link. Twitter will fetch the card from the Bot Link.
+        const xText = encodeURIComponent(`${text}\n\n@KubacoinAirdrop #KUBA #Airdrop #Crypto`);
         window.open(`https://twitter.com/intent/tweet?text=${xText}&url=${encodedUrl}`, '_blank');
         break;
       case 'fb':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
         break;
       case 'copy':
-        // For copy to clipboard, we include the status link too so they can paste it nicely
-        const copyStatusLink = "https://x.com/KubacoinAirdrop/status/1987437597522866263?s=20";
-        navigator.clipboard.writeText(`${text}\n${copyStatusLink}\n${url}`);
+        // For copy to clipboard, only the text and the referral link
+        navigator.clipboard.writeText(`${text}\n${url}`);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
         break;

@@ -290,8 +290,10 @@ const Chat: React.FC = () => {
   };
 
   const handleShare = () => {
-    const appUrl = `https://t.me/${TELEGRAM_BOT_USERNAME}`; 
-    // Updated Share Text for Chat Action
+    // Generate ref link if possible, otherwise just bot link
+    const myId = state.telegramUserId || 'guest';
+    const appUrl = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ref_${myId}`; 
+    // Updated Share Text
     const shareText = "🔥 This KUBA AI is roasting me! 🤬 Come fight it and earn free crypto. 💰 #KUBA #Airdrop";
     const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`;
 
