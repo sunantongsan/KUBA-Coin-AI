@@ -8,9 +8,16 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // Only define the specific key we need. 
-      // General process polyfill is handled in index.html to avoid conflicts.
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      // Define API_KEY specifically
+      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      // Polyfill empty process.env object to prevent crashes in some libs
+      'process.env': {}
+    },
+    build: {
+      rollupOptions: {
+        // Tell Vite NOT to bundle this, as it will be loaded via CDN in index.html
+        external: ['@google/genai']
+      }
     }
   };
 });
