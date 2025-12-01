@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
-import { CONTRACT_ADDRESS, KUBA_LOGO_URL, ADGEM_APP_ID } from '../constants';
+import { CONTRACT_ADDRESS, KUBA_LOGO_URL, ADGEM_APP_ID, REFERRAL_REWARD, TELEGRAM_BOT_USERNAME } from '../constants';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const Wallet: React.FC = () => {
@@ -74,6 +74,17 @@ const Wallet: React.FC = () => {
     }
   };
 
+  const getRefLink = () => {
+    const myId = state.telegramUserId || 'guest';
+    return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ref_${myId}`;
+  };
+
+  const copyRefLink = () => {
+     const url = getRefLink();
+     navigator.clipboard.writeText(url);
+     alert("Invite Link Copied! Send it to your friends.");
+  };
+
   const data = [
     { name: 'Your KUBA', value: state.balance > 0 ? state.balance : 1 },
     { name: 'Locked', value: 5000 },
@@ -129,6 +140,34 @@ const Wallet: React.FC = () => {
           <span className="text-5xl font-black text-kuba-yellow">{state.balance.toLocaleString()}</span>
           <span className="text-xl font-bold text-white">KUBA</span>
         </div>
+      </div>
+
+      {/* REFERRAL STATS CARD */}
+      <div className="w-full bg-gradient-to-r from-pink-900 to-red-900 border-2 border-pink-500/30 rounded-2xl p-4 shadow-lg relative overflow-hidden group">
+         <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/20 rounded-full blur-xl transform translate-x-10 -translate-y-10"></div>
+         
+         <div className="flex justify-between items-center mb-3 relative z-10">
+            <h3 className="text-white font-black italic uppercase text-lg tracking-wider flex items-center gap-2">
+              🤝 MY GANG
+            </h3>
+            <button onClick={copyRefLink} className="bg-black/40 hover:bg-black/60 text-white text-[10px] px-3 py-1 rounded-full border border-pink-500/50 backdrop-blur-sm transition-colors">
+               🔗 COPY LINK
+            </button>
+         </div>
+
+         <div className="grid grid-cols-2 gap-4 relative z-10">
+            <div className="bg-black/30 rounded-xl p-3 text-center border border-white/5">
+               <div className="text-2xl font-black text-white">{state.referralCount}</div>
+               <div className="text-[10px] text-pink-200 uppercase font-bold">Recruits</div>
+            </div>
+            <div className="bg-black/30 rounded-xl p-3 text-center border border-white/5">
+               <div className="text-2xl font-black text-kuba-yellow">{(state.referralCount * REFERRAL_REWARD).toLocaleString()}</div>
+               <div className="text-[10px] text-yellow-200 uppercase font-bold">Earned</div>
+            </div>
+         </div>
+         <p className="text-[10px] text-pink-200/60 text-center mt-3">
+           Get +{REFERRAL_REWARD} KUBA for every new fighter you bring.
+         </p>
       </div>
 
       {/* AdGem Button */}

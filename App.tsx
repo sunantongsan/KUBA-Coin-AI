@@ -57,7 +57,8 @@ const App: React.FC = () => {
       language: tgUser?.language_code || navigator.language || 'en-US',
       soundMode: 'comedy', // Default Sound Mode (90s Style)
       adsWatchedToday: 0,
-      dailyRewardClaimed: false
+      dailyRewardClaimed: false,
+      referralCount: 0
     };
 
     if (saved) {
@@ -119,7 +120,11 @@ const App: React.FC = () => {
              if (data.balance > newBalance) {
                  newBalance = data.balance;
              }
-             return { ...prev, balance: newBalance };
+             return { 
+               ...prev, 
+               balance: newBalance,
+               referralCount: data.referralCount || 0
+             };
           });
         }
       } catch (e) {

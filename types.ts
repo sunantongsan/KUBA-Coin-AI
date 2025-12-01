@@ -30,6 +30,9 @@ export interface AppState {
   // Daily Mission Data
   adsWatchedToday: number;
   dailyRewardClaimed: boolean;
+  
+  // Referral Data
+  referralCount: number;
 }
 
 export interface AdConfig {

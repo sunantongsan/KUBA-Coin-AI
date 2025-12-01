@@ -15,7 +15,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Return 0 if user doesn't exist yet in DB
     return res.status(200).json({
       balance: userData ? userData.balance : 0,
-      isBanned: userData ? userData.isBanned : false
+      isBanned: userData ? userData.isBanned : false,
+      referralCount: userData?.referrals?.length || 0
     });
   } catch (error) {
     return res.status(500).json({ error: "Sync failed" });
