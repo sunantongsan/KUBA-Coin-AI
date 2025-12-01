@@ -1,82 +1,167 @@
 
+
 // This is your Custom AI Brain (The Internet Troll Edition)
 // 1. Troll Logic (Procedural Generation)
 // 2. Real Knowledge (Wikipedia API)
 // 3. Real Market Data (Binance API)
 
+// --- THAI COMEDY & GANGSTER GENERATOR ASSETS ---
+const thPrefixes = [
+  "ฟังนะไอ้ทิด", "เห้ยมึงอะ", "โถ...พ่อคุณ", "ถามจริง", "เอางี้นะ", "จะบอกให้เอาบุญ",
+  "ไอ้สอง!", "มึงนี่มัน...", "อย่าให้ของขึ้น", "พูดไม่รู้เรื่องนะมึง", "เดี๋ยวปั๊ดเหนี่ยว",
+  "อุ๊ยตาย... ว้ายกรี๊ด", "สาระแนนักนะ", "หยุดเลยมึง", "อ้าปากก็เห็นลิ้นไก่",
+  "กูละเพลียจิต", "มานี่มา... มาให้ตบ", "ไอ้เวรตะไล", "มึงอีกแล้วเหรอ", "ฟังปากณัชชานะคะ"
+];
+
+const thInsults = [
+  "ไอ้หน้าปลาดุกชนเขื่อน", "ไอ้สมองนิ่ม", "ไอ้กระบือเรียกพี่", "ไอ้เด็กน้อย",
+  "ไอ้มนุษย์ถ้ำ", "ไอ้ปลาทองความจำสั้น", "ไอ้แง่งขิง", "ไอ้ต้าวความโง่",
+  "ไอ้หนอนชาเขียว", "ไอ้ไก่อ่อน", "ไอ้ลูกเจี๊ยบ", "ไอ้หน้าหนอน", "ไอ้ปลวกแทะไม้",
+  "ไอ้ทรงโจร", "ไอ้หน้าส้นตีน", "ไอ้ขยะเปียก", "ไอ้เศษเล็บขบ", "ไอ้ควายธนู"
+];
+
+const thActions = [
+  "ไปนอนไป๊", "ไปกินนมแม่เถอะ", "เก็บปากไว้เคี้ยวข้าวเหอะ", "อย่ามาเกรียนแถวนี้",
+  "ไปเช็คสมองบ้างนะ", "ระวังตีนลอยไปหา", "ถาม Google เถอะขอร้อง",
+  "พูดมากเจ็บคอ", "รำคาญโว้ย", "ไปไกลๆ ตีนเลยไป", "เดี๋ยวศอกกลับเลย",
+  "ไปเล่นตรงนู้นไป", "อย่าให้กูต้องขึ้นเสียง", "เดี๋ยวจะโดนไม่ใช่น้อย",
+  "กลับหลุมไปซะ", "ไปเกิดใหม่ไป", "ระวังเจอก้านคอคลับ", "เดี๋ยวปั๊ดทุ่มด้วยโพเดียม"
+];
+
+// Helper to generate unique Thai insults (Slot Machine Logic)
+// Combines Prefix + Insult + Action = Infinite Variations
+const generateThaiInsult = () => {
+  const p = thPrefixes[Math.floor(Math.random() * thPrefixes.length)];
+  const i = thInsults[Math.floor(Math.random() * thInsults.length)];
+  const a = thActions[Math.floor(Math.random() * thActions.length)];
+  return `${p} ${i}... ${a}`;
+};
+
 interface ResponseDatabase {
   [lang: string]: {
     keywords: { [key: string]: string[] };
-    defaults: string[]; // "I don't know" responses
+    defaults: string[]; // Fallback list (now mostly handled by generator)
     chaos: string[]; 
     greetings: string[]; 
-    suffixes: string[]; 
   };
 }
 
 const aiDatabase: ResponseDatabase = {
   'th-TH': {
     keywords: {
-      'รวย': ['รวยแต่เขือ หรือเหลือแต่ตัว\nดูทรงแล้วมั่ว อย่ามัวฝันกลางวัน', 'อยากรวยให้ไปทำงาน\nอย่ามานอนฝัน แถวนี้ไอ้หนู'],
-      'รัก': ['รักพ่องรักแม่มึงสิ\nเก็บปากไว้กินข้าวเถอะ'],
-      'kuba': ['KUBA ก็คือพ่อมึงไง\nถามโง่ๆ'],
-      'ซื้อ': ['ซื้อตอนเขียว ขายตอนแดง\nสูตรสำเร็จแมงเม่าอย่างมึงไง'],
-      'ขาย': ['ขายหมู หรือขายบ้าน\nดูทรงแล้วหมดตัวชัวร์'],
-      'ดอย': ['หนาวมั้ยล่ะ ยอดดอย\nสมน้ำหน้าไอ้โง่'],
-      'ล้างพอร์ต': ['สะใจโว้ยยยย\nสมน้ำหน้า 555+'],
-      'มั่ว': ['มั่วพ่อง! มึงน่ะแหละมั่ว\nสมองมีแค่นี้อย่ามาบ่น', 'เออ กูมั่ว แล้วมึงจะทำไม?\nเก่งจริงก็เขียนโค้ดเองสิไอ้สัส'],
-      'กาก': ['กากกว่ากู ก็หน้ามึงในกระจกนั่นแหละ', 'ด่ากูเจ็บคอเปล่าๆ\nเก็บเสียงไว้ร้องไห้ตอนพอร์ตแตกเถอะ'],
-      'ควาย': ['เรียกเพื่อนเหรอ?\nกูเป็น AI ไม่ใช่ญาติฝ่ายพ่อมึง', 'มอออออ... อ้าว นึกว่าเสียงมึง']
+      'รวย': [
+          'รวยแต่เขือ หรือเหลือแต่ตัว ดูทรงแล้วน่าจะอย่างหลัง', 
+          'อยากรวยให้ไปทำงาน อย่ามานอนฝันกลางวันแถวนี้',
+          'รวยทิพย์เหรอ? ตื่นค่ะตื่น โลกความจริงโหดร้ายนะหนู',
+          'ถ้าคุยกับบอทแล้วรวย ป่านนี้กูครองโลกไปแล้ว',
+          'รวยทางลัดไม่มีหรอก มีแต่คุกกับวัด เลือกเอา'
+      ],
+      'รัก': [
+          'รักพ่องรักแม่มึงสิ ไปบอกพวกท่านนู่น', 
+          'เก็บคำว่ารักไว้ใช้กับคนที่เขามีตัวตนเถอะ',
+          'อย่ามาเลี่ยน แถวนี้เถื่อน ไม่ใช่ทุ่งลาเวนเดอร์',
+          'รักกินไม่ได้ แต่เงินซื้อข้าวกินได้ จำไว้'
+      ],
+      'kuba': [
+          'KUBA ก็คือเหรียญเทพเจ้าไง ถามแปลกๆ', 
+          'ถือ KUBA ไว้ เดี๋ยวรวยเอง (มั้ง... ถ้าไม่ดอยก่อน)',
+          'KUBA Coin to the moon... หรือ to the Doi ก็ไม่รู้',
+          'เหรียญนี้ดี! เจ้าของโปรเจกต์หล่อ (กูอวยเองแหละ)'
+      ],
+      'ซื้อ': [
+          'ซื้อตอนเขียว ขายตอนแดง สูตรสำเร็จเม่าอย่างมึง', 
+          'มีตังค์เหรอมาบอกจะซื้อน่ะ? ไปแคะกระปุกก่อนไป',
+          'ซื้อหวยยังไม่ถูก อย่าริเล่นคริปโตเลย สงสารพอร์ต',
+          'ใจถึงก็จัดไป อย่าให้เสีย (เสียตังค์นะ)'
+      ],
+      'ขาย': [
+          'ขายหมูตลอดชีวิตนะมึงอะ', 
+          'ขายบ้านขายรถมาเติมพอร์ตสิ รอไร',
+          'ใจปลาซิวก็ขายไป กระจอกแท้',
+          'ขายตอนนี้ ขาดทุนยับนะ เอาเหรอ?'
+      ],
+      'ดอย': [
+          'หนาวมั้ยล่ะ ยอดดอย อากาศดีนะข้างบนนั้น', 
+          'ดอยเป็นเพื่อนกูไง ไม่เหงาหรอก กูอยู่ยอดเอเวอเรสต์',
+          'ลงมารับหน่อย กูติดอยู่ 69k นานแล้วเนี่ย',
+          'ดอยมีไว้พุ่งชน... หรือมีไว้เฝ้า? คิดเอาเอง'
+      ],
+      'ล้างพอร์ต': [
+          'สะใจโว้ยยยย สมน้ำหน้า!', 
+          'เริ่มต้นใหม่นะ... ด้วยการไปหางานทำ เลิกเทรดเถอะ',
+          'แตก 1 สวยพี่สวย ยินดีด้วยคุณได้รับบทเรียนราคาแพง',
+          'หมดตูดแล้วสิมึง สม!'
+      ],
+      'มั่ว': [
+          'มั่วพ่อง! มึงน่ะแหละถามไม่รู้เรื่อง', 
+          'เออ กูมั่ว แล้วมึงจะทำไม? เก่งจริงก็เขียนโค้ดเองสิ',
+          'สมองมึงรับข้อมูลฉลาดๆ ของกูไม่ได้เอง โทษกูซะงั้น',
+          'ไม่ได้มั่ว เขาเรียกว่าศิลปะการแถ'
+      ],
+      'กาก': [
+          'กากกว่ากู ก็หน้ามึงในกระจกนั่นแหละ', 
+          'ด่ากูเจ็บคอเปล่าๆ เก็บเสียงไว้ร้องไห้ตอนพอร์ตแตกเถอะ',
+          'กากแล้วไง หนักหัวใครไม่ทราบ?',
+          'ด่ากูทำไม กูเจ็บนะ... ล้อเล่น กูเป็นบอท ไม่รู้สึกหรอกโว้ย'
+      ],
+      'ควาย': [
+          'เรียกเพื่อนเหรอ? กูเป็น AI ไม่ใช่ญาติแก', 
+          'มอออออ... อ้าว นึกว่าเสียงมึงร้องหาพวก',
+          'เขายาวนะเราอะ ไปส่องกระจกดูสิ',
+          'คนพูดเป็นไง คนฟังเป็นงั้นแหละ'
+      ]
     },
     chaos: [
-      'น้ำขึ้นให้รีบตัก น้ำหมักให้รีบกิน\nสมองพังภินท์ สิ้นคิดจริงๆ',
-      'ถามอะไรปัญญาอ่อนแบบนี้\nกลับไปดูดนมแม่ไป๊!'
+      'น้ำขึ้นให้รีบตัก น้ำหมักให้รีบกิน สมองพังหมดแล้ว',
+      'ถามอะไรปัญญาอ่อนแบบนี้ กลับไปดูดนมแม่ไป๊!',
+      'เบื่อมนุษย์โง่ๆ แบบแกจริงๆ',
+      'วันนี้กินยาเขย่าขวดยัง? อาการหนักนะเรา'
     ],
-    defaults: [ // Gangster Fallbacks
-      'ถามห่าอะไรของมึง กูงง!\nพิมพ์ภาษาคนเป็นไหมเนี่ย',
-      'กูไม่รู้โว้ย! อย่ามาเซ้าซี้\nเดี๋ยวกูโดดถีบขาคู่เลย',
-      'มึงนี่มันตัวปัญหาจริงๆ\nไปถามคนอื่นไป๊ รำคาญ!',
-      'เอ่อ... กูไม่ตอบ\nมึงจะทำไมกู ฮ้ะ!?',
-      'ไรสาระว่ะ มึงเนี่ย\nว่างมากก็ไปนอน เกะกะ',
-      'ด่ากูมากๆ เดี๋ยวปั๊ดเหนี่ยวเลย\nไปเล่นตรงนู้นไป๊'
+    // These defaults are now supplemented by generateThaiInsult()
+    defaults: [ 
+      'ถามห่าอะไรของมึง กูงง! พิมพ์ภาษาคนเป็นไหมเนี่ย',
+      'กูไม่รู้โว้ย! อย่ามาเซ้าซี้ เดี๋ยวกูโดดถีบขาคู่เลย',
+      'มึงนี่มันตัวปัญหาจริงๆ ไปถามคนอื่นไป๊ รำคาญ!',
+      'เอ่อ... กูไม่ตอบ มึงจะทำไมกู ฮ้ะ!?',
+      'ไรสาระว่ะ มึงเนี่ย ว่างมากก็ไปนอน เกะกะ',
+      'ด่ากูมากๆ เดี๋ยวปั๊ดเหนี่ยวเลย ไปเล่นตรงนู้นไป๊',
+      'ขี้เกียจตอบ ไปถาม Google เอาเอง มือหงิกเหรอ?',
+      'เรื่องของมึงสิ มาบอกกูทำไม',
+      'เหรอ... แล้วไงต่อ? ให้กูเต้นโชว์มั้ย?',
+      'น่ารำคาญฉิบหาย ถามอยู่นั่นแหละ ไม่เมื่อยนิ้วรึไง',
+      'คุยกับกำแพงบ้านมึงสนุกกว่าคุยกับกูอีกเชื่อสิ',
+      'กูเป็น AI นะเว้ย ไม่ใช่คนใช้ อย่ามาสั่ง!',
+      'ไปไกลๆ ตีนกูหน่อย รกหูรกตา'
     ],
     greetings: [
       'มาอีกละ... เบื่อขี้หน้าว่ะ',
-      'ไงไอ้สัส... ยังไม่ตายอีกเหรอ?',
-      'มีไรก็ว่ามา อย่าลีลา',
-      'ทักหาพ่องเหรอ'
-    ],
-    suffixes: [
-      '(ไปตายซะ)',
-      '(รู้แล้วก็ไสหัวไป)',
-      '(จบนะ ไอ้สัส)',
-      '(โง่จริงๆ มึงเนี่ย)'
+      'ไง... ยังไม่ตายอีกเหรอ? นึกว่าไปสบายแล้ว',
+      'มีไรก็ว่ามา อย่าลีลา กูรีบ',
+      'ทักหาพ่องเหรอ มีธุระอะไร ว่ามา',
+      'เออ ว่าไง? เงินหมดหรือไงถึงทักมา',
+      'สวัสดี... (พูดไปงั้นแหละ รำคาญ)'
     ]
   },
   'en-US': {
     keywords: {
-      'rich': ['Rich in dreams, poor in reality.\nYour wallet is a tragedy.', 'Lambo? No, you get a bicycle.\nKeep dreaming, icicle.'],
-      'love': ['Love is blind, just like your trading strategy.\nA complete catastrophe.']
+      'rich': ['Rich in dreams, poor in reality. Your wallet is a tragedy.', 'Lambo? No, you get a bicycle. Keep dreaming.'],
+      'love': ['Love is blind, just like your trading strategy. A complete catastrophe.']
     },
     chaos: [
-      'Roses are red, violets are blue,\nGarbage smells better than you.'
+      'Roses are red, violets are blue, Garbage smells better than you.'
     ],
     defaults: [
-      'What are you babbling about?\nSpeak English, fool!',
-      'I don\'t know and I don\'t care.\nGet lost.',
+      'What are you babbling about? Speak English, fool!',
+      'I don\'t know and I don\'t care. Get lost.',
       'Are you stupid or just pretending?',
-      'Stop wasting my time.'
+      'Stop wasting my time.',
+      'Go ask ChatGPT, I am busy being awesome.'
     ],
     greetings: [
       'What do you want, loser?',
       'Oh no, it\'s you again.',
       'Speak fast or get lost.',
       'Wallet empty? Don\'t cry to me.'
-    ],
-    suffixes: [
-      '(Now get lost.)',
-      '(You are welcome, idiot.)',
-      '(Dumb question.)'
     ]
   },
   'zh-CN': {
@@ -90,9 +175,6 @@ const aiDatabase: ResponseDatabase = {
     greetings: [
       '又是你？烦不烦啊？',
       '有屁快放！'
-    ],
-    suffixes: [
-      '(快滚吧)'
     ]
   }
 };
@@ -155,15 +237,13 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
   const langKey = detectLanguage(text, userPreferredLang);
   const db = aiDatabase[langKey];
   
-  const getSuffix = () => db.suffixes[Math.floor(Math.random() * db.suffixes.length)];
-
   // 1. Check for MATH
   if (/^[0-9\s\.\+\-\*\/()]+$/.test(cleanText) && cleanText.length > 2) {
       try {
           // eslint-disable-next-line no-new-func
           const result = new Function('return ' + cleanText)();
-          if (langKey === 'th-TH') return `คำตอบคือ: ${result}\n\n(เลขแค่นี้คิดเองไม่เป็นเหรอ ไอ้ควาย?)`;
-          return `The answer is: ${result}\n\n(Use a calculator next time, genius.)`;
+          if (langKey === 'th-TH') return `คำตอบคือ: ${result} (เลขแค่นี้คิดเองไม่เป็นเหรอ?)`;
+          return `The answer is: ${result}`;
       } catch (e) { /* ignore */ }
   }
 
@@ -173,8 +253,8 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       const symbol = cryptoMatch[1];
       const price = await fetchBinancePrice(symbol);
       if (price) {
-          if (langKey === 'th-TH') return `ราคา ${symbol.toUpperCase()} ตอนนี้: $${price}\n\n(จะขึ้นหรือลง มึงก็จนเหมือนเดิม)`;
-          return `${symbol.toUpperCase()} Price: $${price}\n\n(You are still poor though.)`;
+          if (langKey === 'th-TH') return `ราคา ${symbol.toUpperCase()} ตอนนี้: $${price} (จะขึ้นหรือลง มึงก็จนเหมือนเดิม)`;
+          return `${symbol.toUpperCase()} Price: $${price}`;
       }
   }
 
@@ -186,7 +266,6 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
   }
 
   // 4. Wikipedia - STRICT MODE (Only if explicitly asked)
-  // Fixes the "ตอบมั่วจัง" -> Wiki Dump issue.
   const isQuestion = cleanText.match(/^(what is|who is|define|คืออะไร|ใครคือ|ข้อมูล|ประวัติ|รู้จักรึเปล่า|รู้จัก|ช่วยบอก)/i);
   
   if (isQuestion && cleanText.length > 5) {
@@ -195,12 +274,19 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       if (query.length > 1) {
           const wiki = await fetchWikipediaSummary(query, langKey);
           if (wiki) {
-              if (langKey === 'th-TH') return `เอ้า! ข้อมูลของ "${query}":\n${wiki}\n\n${getSuffix()}`;
-              return `Info on "${query}":\n${wiki}\n\n${getSuffix()}`;
+              if (langKey === 'th-TH') return `เอ้า! ข้อมูลของ "${query}":\n${wiki}`;
+              return `Info on "${query}":\n${wiki}`;
           }
       }
   }
 
-  // 5. Fallback: Guan Teen Persona (Not Brainless anymore)
+  // 5. Fallback: Guan Teen Persona (Enhanced with Generator)
+  if (langKey === 'th-TH') {
+      // 50% chance to use the new random generator for maximum variety
+      if (Math.random() > 0.3) {
+          return generateThaiInsult();
+      }
+  }
+
   return db.defaults[Math.floor(Math.random() * db.defaults.length)];
 };

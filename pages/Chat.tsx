@@ -9,7 +9,7 @@ import { MONETAG_DIRECT_LINK, INTERACTION_REWARD, TELEGRAM_BOT_USERNAME, AD_REWA
 
 const DAILY_AD_TARGET = 5;
 const DAILY_MISSION_REWARD = 1000;
-const AD_WAIT_SECONDS = 15;
+const AD_WAIT_SECONDS = 20; // Increased to 20s for revenue assurance
 
 const Chat: React.FC = () => {
   const { 
@@ -61,36 +61,12 @@ const Chat: React.FC = () => {
         timestamp: Date.now()
       }]);
     }
-    // Check if there's a pending ad on mount
-    checkAdStatus();
   }, []);
 
-  // Ad Status Check Logic
-  const checkAdStatus = () => {
-    const lastClickStr = localStorage.getItem('kuba_ad_click_ts');
-    if (lastClickStr) {
-      const lastClickTime = parseInt(lastClickStr, 10);
-      const elapsed = Date.now() - lastClickTime;
-      const remaining = Math.ceil((AD_WAIT_SECONDS * 1000 - elapsed) / 1000);
-
-      if (remaining > 0) {
-        // Resume countdown
-        setAdCountdown(remaining);
-      } else {
-        // Success immediately
-        completeAdReward();
-      }
-    }
-  };
-
   const completeAdReward = () => {
-    const lastClickStr = localStorage.getItem('kuba_ad_click_ts');
-    if (!lastClickStr) return; // Already claimed
-
-    localStorage.removeItem('kuba_ad_click_ts');
     setAdCountdown(null);
-    
     setIsLoading(true);
+    
     setTimeout(() => {
       addQuota();
       incrementAdsWatched(); // Update mission progress
@@ -99,7 +75,7 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'model',
-        text: `✅ เยี่ยมมาก! ดูโฆษณาครบตามเวลา รับโควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้ง!\n(Ad verified. Quota replenished.)`,
+        text: `✅ เยี่ยมมาก! ดูโฆษณาครบตามเวลา รับโควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้ง!`,
         timestamp: Date.now()
       }]);
     }, 500);
@@ -108,28 +84,18 @@ const Chat: React.FC = () => {
   // Countdown Timer Effect
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
+    
     if (adCountdown !== null && adCountdown > 0) {
       timer = setTimeout(() => {
         setAdCountdown(prev => (prev !== null ? prev - 1 : null));
       }, 1000);
     } else if (adCountdown === 0) {
-      // Timer finished
+      // Timer finished - Give Reward
       completeAdReward();
     }
+    
     return () => clearTimeout(timer);
   }, [adCountdown]);
-
-
-  // Check on Visibility Change (User comes back from Ad)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkAdStatus();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
 
   const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -144,13 +110,13 @@ const Chat: React.FC = () => {
     });
   };
 
-  // Helper to get a random reward message
+  // Helper to get a random reward message (No Parentheses)
   const getRewardMessage = () => {
     const msgs = [
-      "\n\n(อ่ะ... เอาไป 200 KUBA ค่าทำขวัญ 🪙)",
-      "\n\n(ด่าเสร็จก็แจก... รับไป 200 KUBA ไป๊!)",
-      "\n\n(เอา 200 KUBA ไปแดกซะ)",
-      "\n\n(รับไป 200 KUBA... แล้วไสหัวไปนอนได้แล้ว)"
+      "\n\nเอาไป 200 KUBA ค่าทำขวัญ",
+      "\n\nด่าเสร็จก็แจก... รับไป 200 KUBA ไป๊!",
+      "\n\nเอา 200 KUBA ไปแดกซะ",
+      "\n\nรับไป 200 KUBA... แล้วไสหัวไปนอนได้แล้ว"
     ];
     return msgs[Math.floor(Math.random() * msgs.length)];
   };
@@ -271,7 +237,7 @@ const Chat: React.FC = () => {
         const fallbackText = await generateLocalResponse(userMsg.text, state.language);
         
         // Append reward text to fallback as well
-        const finalText = fallbackText + "\n(AI สมองไหล 🐹)" + getRewardMessage();
+        const finalText = fallbackText + "\nAI สมองไหล 🐹" + getRewardMessage();
 
         const aiMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -293,25 +259,22 @@ const Chat: React.FC = () => {
   const handleWatchAd = async (direct: boolean = true) => {
     // If not direct (triggered by typing), confirm first
     if (!direct) {
-      if (!window.confirm("Quota หมดแล้วจ้า! ไปดูโฆษณาแก้เซ็งสักแป๊บมั้ย? (Open Ad Link to get +3 Chats)")) {
+      if (!window.confirm("Quota หมดแล้วจ้า! ไปดูโฆษณาแก้เซ็งสักแป๊บมั้ย? (Open Ad Link to get +5 Chats)")) {
         return;
       }
     }
       
-    // 1. Mark Start Time in Storage (Survives app close/reload)
-    localStorage.setItem('kuba_ad_click_ts', Date.now().toString());
-
-    // 2. Set Visual Countdown
+    // 1. Reset and Start Visual Countdown IMMEDIATELLY
     setAdCountdown(AD_WAIT_SECONDS);
 
-    // 3. Open Direct Link
+    // 2. Open Direct Link after small delay to let overlay render
     setTimeout(() => {
       if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
         window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
       } else {
         window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
       }
-    }, 800); 
+    }, 1500); 
   };
 
   const handleClaimDaily = () => {
@@ -320,7 +283,7 @@ const Chat: React.FC = () => {
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'model',
-      text: `🎉 สุดยอด! ว่างจัดจริงๆ ดูโฆษณาครบ ${DAILY_AD_TARGET} รอบ\nรับไปเลย ${DAILY_MISSION_REWARD} KUBA!\n(You have no life, but you have coins!)`,
+      text: `🎉 สุดยอด! ว่างจัดจริงๆ ดูโฆษณาครบ ${DAILY_AD_TARGET} รอบ\nรับไปเลย ${DAILY_MISSION_REWARD} KUBA!`,
       timestamp: Date.now()
     }]);
   };
@@ -382,23 +345,23 @@ const Chat: React.FC = () => {
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
       
-      {/* Full Screen Ad Countdown Overlay */}
+      {/* Full Screen Ad Countdown Overlay - BLOCKING */}
       {adCountdown !== null && adCountdown > 0 && (
-        <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-            <div className="text-6xl mb-6 animate-bounce">⏳</div>
+        <div className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-6 text-center animate-fade-in pointer-events-auto">
+            <div className="text-6xl mb-6 animate-spin-reverse">⏳</div>
             <h2 className="text-2xl font-black text-kuba-yellow mb-2 uppercase tracking-widest">
               กำลังยืนยันโฆษณา...
             </h2>
-            <div className="text-7xl font-mono font-black text-white mb-6 bg-gray-900 px-6 py-2 rounded-xl border-4 border-gray-700">
+            <div className="text-[120px] font-mono font-black text-white leading-none mb-6">
               {adCountdown}
             </div>
-            <p className="text-gray-400 text-sm animate-pulse max-w-xs">
-              กรุณารอสักครู่... ระบบกำลังตรวจสอบการรับชม<br/>
-              (Please wait while we verify your ad view)
+            <p className="text-red-500 font-bold text-sm animate-pulse max-w-xs bg-red-900/20 p-4 rounded-xl border border-red-800">
+              ⚠️ ห้ามปิดหน้านี้! <br/>
+              กรุณารอให้ครบเวลาเพื่อให้ระบบตรวจสอบความถูกต้อง
             </p>
-            <div className="mt-8 w-64 h-2 bg-gray-800 rounded-full overflow-hidden">
+            <div className="mt-8 w-64 h-4 bg-gray-800 rounded-full overflow-hidden border-2 border-gray-600">
                <div 
-                 className="h-full bg-kuba-yellow transition-all duration-1000 ease-linear"
+                 className="h-full bg-green-500 transition-all duration-1000 ease-linear"
                  style={{ width: `${((AD_WAIT_SECONDS - adCountdown) / AD_WAIT_SECONDS) * 100}%` }}
                />
             </div>
@@ -661,7 +624,7 @@ const Chat: React.FC = () => {
               onClick={() => handleWatchAd(true)}
               className="w-full bg-green-600 text-white font-black py-4 rounded-xl shadow-[4px_4px_0px_0px_#000] active:shadow-none active:translate-y-1 transition-all uppercase animate-pulse border-4 border-green-800 flex items-center justify-center gap-2"
             >
-              🚀 CLICK TO SUPPORT (GET +3)
+              🚀 CLICK TO SUPPORT (GET +{AD_REWARD_QUOTA})
             </button>
           )}
         </div>
