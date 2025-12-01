@@ -94,12 +94,20 @@ const App: React.FC = () => {
             alert("🚫 Your account has been banned for suspicious activity.");
           }
 
-          // If server balance is higher (due to AdGem rewards), update local state
+          // SERVER AUTHORITATIVE SYNC
+          // We assume Server DB is more accurate than local storage for multi-device support
           setState(prev => {
+             // If local balance is 0 but server has money, trust server.
+             // If local has money but server is 0 (first sync?), trust local, then push to server later.
+             // Best practice: Trust max value or just trust server if > 0
+             let newBalance = prev.balance;
              if (data.balance > prev.balance) {
-               return { ...prev, balance: data.balance };
+                 newBalance = data.balance;
              }
-             return prev;
+             
+             // Sync Quota if server tracks it (optional, usually quota is local per day, but better synced)
+             // For now we only strongly sync Balance as it involves real value.
+             return { ...prev, balance: newBalance };
           });
         }
       } catch (e) {
@@ -110,7 +118,7 @@ const App: React.FC = () => {
     syncWithServer();
   }, [state.telegramUserId]);
 
-  // Persist State
+  // Persist State to LocalStorage
   useEffect(() => {
     const storageKey = state.telegramUserId ? `kuba_data_v1_${state.telegramUserId}` : 'kuba_data_v1_guest';
     localStorage.setItem(storageKey, JSON.stringify(state));
@@ -119,6 +127,8 @@ const App: React.FC = () => {
   // Actions
   const incrementBalance = (amount: number) => {
     setState(prev => ({ ...prev, balance: prev.balance + amount }));
+    // Note: We don't push to server on EVERY chat reward to save API calls, 
+    // but critical updates like Ads are handled in Chat.tsx
   };
 
   const decrementQuota = () => {
@@ -142,11 +152,27 @@ const App: React.FC = () => {
   };
 
   const claimDailyReward = (amount: number) => {
-    setState(prev => ({ 
-      ...prev, 
-      balance: prev.balance + amount,
-      dailyRewardClaimed: true 
-    }));
+    setState(prev => {
+      const newState = { 
+        ...prev, 
+        balance: prev.balance + amount,
+        dailyRewardClaimed: true 
+      };
+      
+      // Sync to Server on Big Reward
+      if (prev.telegramUserId) {
+        fetch('/api/user/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                userId: prev.telegramUserId,
+                balance: newState.balance
+            })
+        }).catch(console.error);
+      }
+      
+      return newState;
+    });
   };
 
   return (

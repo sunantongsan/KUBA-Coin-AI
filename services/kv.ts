@@ -4,6 +4,7 @@ import { kv } from '@vercel/kv';
 // Define User Data Structure for DB
 export interface UserData {
   balance: number;
+  quota?: number; // Added quota sync
   isBanned: boolean;
   transactions: string[]; // Store transaction IDs to prevent duplicates
   lastUpdated: number;
@@ -46,6 +47,29 @@ export const updateBalance = async (userId: string, amount: number, transactionI
     return true;
   } catch (error) {
     console.error("KV Update Error:", error);
+    return false;
+  }
+};
+
+// NEW: Generic Save for Client-Side updates (Quota, Chat Rewards)
+export const saveUserState = async (userId: string, data: Partial<UserData>): Promise<boolean> => {
+  try {
+    const userKey = `user:${userId}`;
+    let userData = await kv.get<UserData>(userKey);
+
+    if (!userData) {
+      userData = { balance: 0, isBanned: false, transactions: [], lastUpdated: Date.now() };
+    }
+    
+    // Update fields if provided
+    if (data.balance !== undefined) userData.balance = data.balance;
+    if (data.quota !== undefined) userData.quota = data.quota;
+
+    userData.lastUpdated = Date.now();
+    await kv.set(userKey, userData);
+    return true;
+  } catch (error) {
+    console.error("KV Save Error:", error);
     return false;
   }
 };

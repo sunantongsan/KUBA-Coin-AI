@@ -63,22 +63,39 @@ const Chat: React.FC = () => {
     }
   }, []);
 
-  const completeAdReward = () => {
+  const completeAdReward = async () => {
     setAdCountdown(null);
     setIsLoading(true);
     
-    setTimeout(() => {
-      addQuota();
-      incrementAdsWatched(); // Update mission progress
-      setIsLoading(false);
-      playSoundEffect('game');
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'model',
-        text: `✅ Awesome! Ad watched. Quota refilled by ${AD_REWARD_QUOTA}!`,
-        timestamp: Date.now()
-      }]);
-    }, 500);
+    // Slight delay for UX
+    await new Promise(r => setTimeout(r, 500));
+
+    addQuota();
+    incrementAdsWatched(); // Update mission progress
+    
+    // Save to Server immediately to prevent exploit
+    if (state.telegramUserId) {
+       try {
+         await fetch('/api/user/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                userId: state.telegramUserId,
+                balance: state.balance, // Note: Balance update happens in next tick usually, but Quota is key here
+                quota: state.dailyQuota + AD_REWARD_QUOTA
+            })
+         });
+       } catch (e) { console.error("Cloud Save Error", e); }
+    }
+
+    setIsLoading(false);
+    playSoundEffect('game');
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      role: 'model',
+      text: `✅ Awesome! Ad watched. Quota refilled by ${AD_REWARD_QUOTA}!`,
+      timestamp: Date.now()
+    }]);
   };
 
   // Countdown Timer Effect
@@ -89,10 +106,8 @@ const Chat: React.FC = () => {
       timer = setTimeout(() => {
         setAdCountdown(prev => (prev !== null ? prev - 1 : null));
       }, 1000);
-    } else if (adCountdown === 0) {
-      // Timer finished - Give Reward
-      completeAdReward();
-    }
+    } 
+    // We do NOT auto-complete here anymore. We wait for user to click "CLAIM".
     
     return () => clearTimeout(timer);
   }, [adCountdown]);
@@ -110,7 +125,6 @@ const Chat: React.FC = () => {
     });
   };
 
-  // Helper to get a random reward message (English)
   const getRewardMessage = () => {
     const msgs = [
       "\n\nTake 200 KUBA for your feelings.",
@@ -123,7 +137,7 @@ const Chat: React.FC = () => {
 
   const handleSendMedia = async (file: File) => {
     if (state.dailyQuota <= 0) {
-      handleWatchAd(false); // Prompt user
+      handleWatchAd(false);
       return;
     }
 
@@ -147,10 +161,7 @@ const Chat: React.FC = () => {
     decrementQuota();
 
     try {
-        // Send Image to Gemini
         const { text: responseText, sources } = await generateTrollResponse({ data: base64Data, mimeType }, state.language);
-        
-        // Append reward text
         const finalText = responseText + getRewardMessage();
 
         const aiMsg: ChatMessage = {
@@ -164,7 +175,6 @@ const Chat: React.FC = () => {
         setMessages(prev => [...prev, aiMsg]);
         incrementBalance(INTERACTION_REWARD);
 
-        // Play SFX only
         if (isSoundEnabled) {
           playSoundEffect(state.soundMode);
         }
@@ -193,7 +203,7 @@ const Chat: React.FC = () => {
     
     if (!textToSend.trim()) return;
     if (state.dailyQuota <= 0) {
-      handleWatchAd(false); // Prompt user
+      handleWatchAd(false);
       return;
     }
 
@@ -211,8 +221,6 @@ const Chat: React.FC = () => {
 
     try {
       const { text: responseText, sources } = await generateTrollResponse(userMsg.text, state.language);
-      
-      // Append reward text
       const finalText = responseText + getRewardMessage();
 
       const aiMsg: ChatMessage = {
@@ -226,17 +234,12 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, aiMsg]);
       incrementBalance(INTERACTION_REWARD);
 
-      // Play SFX
-      if (isSoundEnabled) {
-        playSoundEffect(state.soundMode);
-      }
+      if (isSoundEnabled) playSoundEffect(state.soundMode);
       
     } catch (error) {
       console.warn("Gemini unavailable, falling back to Local AI");
       try {
         const fallbackText = await generateLocalResponse(userMsg.text, state.language);
-        
-        // Append reward text to fallback as well
         const finalText = fallbackText + "\nAI Brain Leak 🐹" + getRewardMessage();
 
         const aiMsg: ChatMessage = {
@@ -257,24 +260,22 @@ const Chat: React.FC = () => {
   };
 
   const handleWatchAd = async (direct: boolean = true) => {
-    // If not direct (triggered by typing), confirm first
     if (!direct) {
       if (!window.confirm("Quota exhausted! Watch an ad to refill +2 Chats?")) {
         return;
       }
     }
-      
-    // 1. Reset and Start Visual Countdown IMMEDIATELLY
-    setAdCountdown(AD_WAIT_SECONDS);
 
-    // 2. Open Direct Link after small delay to let overlay render
-    setTimeout(() => {
-      if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
-        window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
-      } else {
-        window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
-      }
-    }, 1500); 
+    // 1. OPEN AD IMMEDIATELY (Fixes Popup Blocker Issue)
+    // Synchronous execution is required for most browsers to allow the popup
+    if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
+      window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
+    } else {
+      window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
+    }
+      
+    // 2. Start Visual Countdown in App
+    setAdCountdown(AD_WAIT_SECONDS);
   };
 
   const handleClaimDaily = () => {
@@ -338,37 +339,52 @@ const Chat: React.FC = () => {
 
   const getRotation = (id: string) => parseInt(id.slice(-2)) % 2 === 0 ? 'rotate-1' : '-rotate-1';
 
-  // Progress Bar Calculation
   const progressPercent = Math.min((state.adsWatchedToday / DAILY_AD_TARGET) * 100, 100);
   const isMissionComplete = state.adsWatchedToday >= DAILY_AD_TARGET;
 
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
       
-      {/* Full Screen Ad Countdown Overlay - BLOCKING */}
-      {adCountdown !== null && adCountdown > 0 && (
-        <div className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-6 text-center animate-fade-in pointer-events-auto">
-            <div className="text-6xl mb-6 animate-spin-reverse">⏳</div>
-            <h2 className="text-2xl font-black text-kuba-yellow mb-2 uppercase tracking-widest">
-              Verifying Ad...
+      {/* IMPROVED AD COUNTDOWN OVERLAY */}
+      {adCountdown !== null && (
+        <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center p-6 text-center animate-fade-in pointer-events-auto">
+            <div className="text-6xl mb-6 animate-pulse">📺</div>
+            
+            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-widest">
+              Watching Ad...
             </h2>
-            <div className="text-[120px] font-mono font-black text-white leading-none mb-6">
-              {adCountdown}
-            </div>
-            <p className="text-red-500 font-bold text-sm animate-pulse max-w-xs bg-red-900/20 p-4 rounded-xl border border-red-800">
-              ⚠️ Do not close! <br/>
-              Please wait for validation to complete.
-            </p>
-            <div className="mt-8 w-64 h-4 bg-gray-800 rounded-full overflow-hidden border-2 border-gray-600">
-               <div 
-                 className="h-full bg-green-500 transition-all duration-1000 ease-linear"
-                 style={{ width: `${((AD_WAIT_SECONDS - adCountdown) / AD_WAIT_SECONDS) * 100}%` }}
-               />
-            </div>
+            
+            {adCountdown > 0 ? (
+              <>
+                 <div className="text-[100px] font-mono font-black text-kuba-yellow leading-none mb-6">
+                  {adCountdown}
+                </div>
+                <p className="text-gray-400 font-bold text-sm max-w-xs">
+                  Please watch the ad in the opened window.<br/>
+                  Return here to claim your reward.
+                </p>
+                <div className="mt-8 w-64 h-4 bg-gray-800 rounded-full overflow-hidden border-2 border-gray-600">
+                   <div 
+                     className="h-full bg-kuba-yellow transition-all duration-1000 ease-linear"
+                     style={{ width: `${((AD_WAIT_SECONDS - adCountdown) / AD_WAIT_SECONDS) * 100}%` }}
+                   />
+                </div>
+              </>
+            ) : (
+              <div className="animate-bounce">
+                <div className="text-4xl mb-4">✅</div>
+                <button 
+                  onClick={completeAdReward}
+                  className="bg-green-500 hover:bg-green-600 text-white text-xl font-black py-4 px-8 rounded-2xl shadow-[0_0_20px_rgba(34,197,94,0.6)] border-4 border-white active:scale-95 transition-transform"
+                >
+                  CLAIM REWARD +{AD_REWARD_QUOTA}
+                </button>
+              </div>
+            )}
         </div>
       )}
 
-      {/* Studio Settings Modal (SFX Only) */}
+      {/* Studio Settings Modal */}
       {showVoiceModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-gray-900 border-2 border-kuba-yellow rounded-2xl p-6 w-full max-w-sm relative shadow-2xl animate-bounce-slow max-h-[90vh] overflow-y-auto">
