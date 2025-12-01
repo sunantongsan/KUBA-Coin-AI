@@ -130,9 +130,8 @@ const Chat: React.FC = () => {
     const msgs = [
       "\n\n(อ่ะ... เอาไป 200 KUBA ค่าทำขวัญ 🪙)",
       "\n\n(ด่าเสร็จก็แจก... รับไป 200 KUBA ไป๊!)",
-      "\n\n(ปลอบขวัญให้ 200 KUBA เด้อ... อย่าร้องไห้ขี้มูกโป่ง)",
-      "\n\n(รับไป 200 KUBA... เอาไปรักษาแผลใจซะ)",
-      "\n\n(เอาไป 200 KUBA... แล้วไสหัวไปนอนได้แล้ว)"
+      "\n\n(เอา 200 KUBA ไปแดกซะ)",
+      "\n\n(รับไป 200 KUBA... แล้วไสหัวไปนอนได้แล้ว)"
     ];
     return msgs[Math.floor(Math.random() * msgs.length)];
   };
@@ -189,7 +188,7 @@ const Chat: React.FC = () => {
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'model',
-            text: "My brain failed to process that image. Try again!",
+            text: "กูดูรูปไม่ได้โว้ย เน็ตเน่า!",
             timestamp: Date.now()
         }]);
     } finally {
@@ -253,7 +252,7 @@ const Chat: React.FC = () => {
         const fallbackText = await generateLocalResponse(userMsg.text, state.language);
         
         // Append reward text to fallback as well
-        const finalText = fallbackText + "\n(My poet brain is offline 🐹)" + getRewardMessage();
+        const finalText = fallbackText + "\n(AI สมองไหล 🐹)" + getRewardMessage();
 
         const aiMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -497,7 +496,7 @@ const Chat: React.FC = () => {
         {/* Marquee */}
         <div className="w-full bg-yellow-900/80 text-yellow-200 text-[10px] font-mono py-1 px-2 rounded overflow-hidden whitespace-nowrap mb-2 border border-yellow-500 border-dashed">
           <div className="animate-marquee inline-block">
-             ⚠️ AI PERSONA: 90s COMEDIAN. SFX: {sfxOptions.find(s => s.id === state.soundMode)?.name}.
+             ⚠️ AI PERSONA: THAI KEYBOARD GANGSTER. SFX: {sfxOptions.find(s => s.id === state.soundMode)?.name}.
           </div>
         </div>
         
@@ -564,7 +563,7 @@ const Chat: React.FC = () => {
         {isLoading && (
           <div className="flex justify-start relative z-10 pl-2">
              <div className="bg-white text-black p-4 rounded-2xl rounded-tl-none text-xs font-mono font-black animate-wiggle shadow-[6px_6px_0px_0px_#000] border-4 border-black rotate-1">
-               ✍️ COMPOSING A SICK RHYME...
+               ✍️ WRITING DISS TRACK...
              </div>
           </div>
         )}

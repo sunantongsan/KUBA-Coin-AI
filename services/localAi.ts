@@ -7,7 +7,7 @@
 interface ResponseDatabase {
   [lang: string]: {
     keywords: { [key: string]: string[] };
-    defaults: string[]; // "I don't know" responses (Now Provocative Poems)
+    defaults: string[]; // "I don't know" responses
     chaos: string[]; 
     greetings: string[]; 
     suffixes: string[]; 
@@ -18,37 +18,35 @@ const aiDatabase: ResponseDatabase = {
   'th-TH': {
     keywords: {
       'รวย': ['รวยแต่เขือ หรือเหลือแต่ตัว\nดูทรงแล้วมั่ว อย่ามัวฝันกลางวัน', 'อยากรวยให้ไปทำงาน\nอย่ามานอนฝัน แถวนี้ไอ้หนู'],
-      'รัก': ['รักไม่ยุ่ง มุ่งแต่ดอย\nคอยจนเปื่อย เหนื่อยก็พัก\nรักตัวเองเถอะ ไอ้ทิด'],
-      'kuba': ['KUBA คือความหวัง หรือพลังทำลายล้าง\nดูพอร์ตแล้วอ้างว้าง\nว่างเปล่าเหลือเกิน'],
-      'ซื้อ': ['ซื้อตอนเขียว ขายตอนแดง\nสูตรสำเร็จแมงเม่า\nเข้าปุ๊บดอยปั๊บ'],
-      'ขาย': ['ขายหมู หรือขายบ้าน\nดูอาการแล้วน่าจะหมดตัว'],
-      'ดอย': ['หนาวมั้ยล่ะ ยอดดอย\nคอยไปเถอะ อีกร้อยปี'],
-      'ล้างพอร์ต': ['สะอาดเอี่ยมอ่อง สมองโล่ง\nเงินก็โล่งตาม']
+      'รัก': ['รักพ่องรักแม่มึงสิ\nเก็บปากไว้กินข้าวเถอะ'],
+      'kuba': ['KUBA ก็คือพ่อมึงไง\nถามโง่ๆ'],
+      'ซื้อ': ['ซื้อตอนเขียว ขายตอนแดง\nสูตรสำเร็จแมงเม่าอย่างมึงไง'],
+      'ขาย': ['ขายหมู หรือขายบ้าน\nดูทรงแล้วหมดตัวชัวร์'],
+      'ดอย': ['หนาวมั้ยล่ะ ยอดดอย\nสมน้ำหน้าไอ้โง่'],
+      'ล้างพอร์ต': ['สะใจโว้ยยยย\nสมน้ำหน้า 555+']
     },
     chaos: [
       'น้ำขึ้นให้รีบตัก น้ำหมักให้รีบกิน\nสมองพังภินท์ สิ้นคิดจริงๆ',
-      'เดินสะดุดมด สลดใจหาย\nโง่จนควายอาย ตายดีกว่ามั้ง',
-      'ฝนตกขี้หมูไหล คนจัญไรมาเจอกัน\nถามคำถามปัญญาอ่อน ทุกวี่ทุกวัน'
+      'ถามอะไรปัญญาอ่อนแบบนี้\nกลับไปดูดนมแม่ไป๊!'
     ],
-    defaults: [ // Explicit "Not Found" + Guan Teen Fallbacks
-      'หาข้อมูลไม่เจอว่ะ... ถามอะไรของเอ็งเนี่ย\nสมองฝ่อ หรือไง ไอ้มะขวิด\nเรื่องแค่นี้ ยังไม่รู้ ดูความคิด\nไปนอนบิด พุงกะทิ อยู่บ้านไป๊!',
-      'หาข้อมูลไม่เจอว่ะ... (ถามอะไรไม่รู้เรื่อง)\nยืนงงงง ในดงตีน สิ้นสงสัย\nไปถามครู ถามพระ หรือถามใคร\nอย่าถามข้า เดี๋ยวปั๊ดเหนี่ยว ไสหัวไป!',
-      'หาข้อมูลไม่เจอว่ะ! เอ็งมั่วรึเปล่า?\nเหมือนสุนัข ขี้มูก อุดจมูกนั่น\nไปเรียนมา ใหม่นะ ไอ้หน้ามัน\nข้าขี้เกียจ จะห้ำหั่น กับคนบอ!',
-      'หาข้อมูลไม่เจอว่ะ... อย่าจี้ถาม!\nอย่ามาลาม ปามบอท ให้ปวดหัว\nไปเสิร์ชกูเกิ้ล เอาเอง อย่ามามั่ว\nระวังตัว โดนถีบตก เก้าอี้ตาย!',
-      'หาข้อมูลไม่เจอว่ะ... ยากจัง พับผ่าสิ\nสมองมี รอยหยัก บ้างไหมหนอ\nข้าเป็นบอท ตลกคาเฟ่ ไม่ใช่หมอ\nอย่ามารอ คำตอบ มอบตีนแทน!'
+    defaults: [ // Gangster Fallbacks
+      'ถามห่าอะไรของมึง กูงง!\nพิมพ์ภาษาคนเป็นไหมเนี่ย',
+      'กูไม่รู้โว้ย! อย่ามาเซ้าซี้\nเดี๋ยวกูโดดถีบขาคู่เลย',
+      'มึงนี่มันตัวปัญหาจริงๆ\nไปถามคนอื่นไป๊ รำคาญ!',
+      'เอ่อ... กูไม่ตอบ\nมึงจะทำไมกู ฮ้ะ!?',
+      'ไรสาระว่ะ มึงเนี่ย\nว่างมากก็ไปนอน เกะกะ'
     ],
     greetings: [
-      'มาอีกละ... เบื่อขี้หน้าจริงๆ',
-      'ไงมนุษย์... ยังไม่เลิกโง่อีกเหรอ?',
-      'กำลังจะนอน... มาปลุกหาพระแสงอะไร',
-      'เตรียมคำด่าไว้ให้แล้ว เข้ามาเลย',
-      'วันนี้พอร์ตแดงล่ะสิ ถึงมาคุยกับบอท'
+      'มาอีกละ... เบื่อขี้หน้าว่ะ',
+      'ไงไอ้สัส... ยังไม่ตายอีกเหรอ?',
+      'มีไรก็ว่ามา อย่าลีลา',
+      'ทักหาพ่องเหรอ'
     ],
     suffixes: [
-      '(ไปหาอ่านต่อเองนะ ไอ้ฟักทอง)',
-      '(รู้แล้วก็เงียบปากไว้)',
-      '(นี่คือความรู้ฟรี จงกราบซะ)',
-      '(ฉลาดขึ้นมาบ้างรึยัง?)'
+      '(ไปตายซะ)',
+      '(รู้แล้วก็ไสหัวไป)',
+      '(จบนะ ไอ้สัส)',
+      '(โง่จริงๆ มึงเนี่ย)'
     ]
   },
   'en-US': {
@@ -60,31 +58,34 @@ const aiDatabase: ResponseDatabase = {
       'Roses are red, violets are blue,\nGarbage smells better than you.'
     ],
     defaults: [
-      'I cannot find that info... (Are you hallucinating?)\nGet out of here, scream and shout!\nYour IQ seems to be zero,\nYou are definitely not a hero.',
-      'Data not found... Asking me dumb things all day,\nGo away, go play in the hay!\nMy circuits hurt from your stupidity,\nGo find another activity!'
+      'What are you babbling about?\nSpeak English, fool!',
+      'I don\'t know and I don\'t care.\nGet lost.',
+      'Are you stupid or just pretending?',
+      'Stop wasting my time.'
     ],
     greetings: [
-      'Oh look, the village idiot returned.',
-      'I was happy until you showed up.',
-      'Ready to be roasted?',
+      'What do you want, loser?',
+      'Oh no, it\'s you again.',
+      'Speak fast or get lost.',
       'Wallet empty? Don\'t cry to me.'
     ],
     suffixes: [
-      '(Go google the rest, lazy.)',
-      '(You are welcome, peasant.)',
-      '(Now leave me alone.)'
+      '(Now get lost.)',
+      '(You are welcome, idiot.)',
+      '(Dumb question.)'
     ]
   },
   'zh-CN': {
     keywords: {},
     chaos: [],
     defaults: [
-      '找不到信息...\n你在说什么？脑子进水了吗？\n快点走开，别烦我！',
-      '数据丢失... 你的问题太蠢了，\n蠢得让我像哭！'
+      '你在说什么废话？',
+      '滚开，别烦我！',
+      '脑子进水了吗？'
     ],
     greetings: [
       '又是你？烦不烦啊？',
-      '准备好被骂了吗？'
+      '有屁快放！'
     ],
     suffixes: [
       '(快滚吧)'
@@ -144,7 +145,7 @@ export const getGreeting = (lang: string): string => {
 
 export const generateLocalResponse = async (text: string, userPreferredLang: string): Promise<string> => {
   // Simulate Thinking
-  await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 800));
+  await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
 
   const cleanText = text.toLowerCase().trim();
   const langKey = detectLanguage(text, userPreferredLang);
@@ -157,7 +158,7 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       try {
           // eslint-disable-next-line no-new-func
           const result = new Function('return ' + cleanText)();
-          if (langKey === 'th-TH') return `คำตอบคือ: ${result}\n\n(เลขแค่นี้คิดเองไม่เป็นเหรอ?)`;
+          if (langKey === 'th-TH') return `คำตอบคือ: ${result}\n\n(เลขแค่นี้คิดเองไม่เป็นเหรอ ไอ้ควาย?)`;
           return `The answer is: ${result}\n\n(Use a calculator next time, genius.)`;
       } catch (e) { /* ignore */ }
   }
@@ -168,7 +169,7 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       const symbol = cryptoMatch[1];
       const price = await fetchBinancePrice(symbol);
       if (price) {
-          if (langKey === 'th-TH') return `ราคา ${symbol.toUpperCase()} ตอนนี้: $${price}\n\n(จะขึ้นหรือลง เอ็งก็ดอยอยู่ดี)`;
+          if (langKey === 'th-TH') return `ราคา ${symbol.toUpperCase()} ตอนนี้: $${price}\n\n(จะขึ้นหรือลง มึงก็จนเหมือนเดิม)`;
           return `${symbol.toUpperCase()} Price: $${price}\n\n(You are still poor though.)`;
       }
   }
@@ -180,19 +181,27 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
     }
   }
 
-  // 4. Wikipedia
-  const ignoreWords = ['hello', 'hi', 'sawasdee', 'test', 'help', 'สวัสดี', 'ทัก', 'เทส'];
-  if (!ignoreWords.includes(cleanText) && cleanText.length > 2) {
-      const query = cleanText.replace(/what is|who is|tell me about|คืออะไร|คือ|ช่วยบอก|รู้จัก|ไหม|ครับ|คะ|ป่ะ|วะ|มั้ย/gi, '').trim();
-      if (query.length > 1) {
+  // 4. Wikipedia (Strict Filter to prevent "Brainless" dictionary dumps)
+  // Prevent searching for common chat words
+  const ignoreWords = [
+    'hello', 'hi', 'sawasdee', 'test', 'help', 'สวัสดี', 'ทัก', 'เทส', 'ตอบมา', 'ตอบ', 'answer', 'talk', 'คุย', 'ว่าไง', 'ไง', 'มึง', 'กู', 'สัส', 'เหี้ย', 'ควาย'
+  ];
+  
+  // Only search Wikipedia if the query is long enough and not in ignore list
+  const isIgnored = ignoreWords.some(word => cleanText.includes(word));
+  
+  if (!isIgnored && cleanText.length > 3) {
+      const query = cleanText.replace(/what is|who is|tell me about|คืออะไร|คือ|ช่วยบอก|รู้จัก|ไหม|ครับ|คะ|ป่ะ|วะ|มั้ย|ตอบมา|หน่อย|ที/gi, '').trim();
+      
+      if (query.length > 2) {
           const wiki = await fetchWikipediaSummary(query, langKey);
           if (wiki) {
-              if (langKey === 'th-TH') return `ข้อมูลของ "${query}":\n${wiki}\n\n${getSuffix()}`;
+              if (langKey === 'th-TH') return `เอ้า! ข้อมูลของ "${query}":\n${wiki}\n\n${getSuffix()}`;
               return `Info on "${query}":\n${wiki}\n\n${getSuffix()}`;
           }
       }
   }
 
-  // 5. Fallback: Guan Teen Poem with Explicit "Not Found" message
+  // 5. Fallback: Guan Teen Persona
   return db.defaults[Math.floor(Math.random() * db.defaults.length)];
 };
