@@ -2,30 +2,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
-import { generateTrollResponse } from '../services/geminiService'; // TTS Removed
-import { playSoundEffect } from '../services/audioEffects'; 
+import { generateTrollResponse, generateSpeech } from '../services/geminiService';
 import { ChatMessage } from '../types';
-import { MONETAG_DIRECT_LINK, INTERACTION_REWARD, TELEGRAM_BOT_USERNAME, AD_REWARD_QUOTA } from '../constants';
+import { AD_URL, INTERACTION_REWARD, ADSGRAM_BLOCK_ID, TELEGRAM_BOT_USERNAME } from '../constants';
 
 const Chat: React.FC = () => {
-  const { state, decrementQuota, addQuota, incrementBalance, setSoundMode } = useAppContext();
+  const { state, decrementQuota, addQuota, incrementBalance, setSelectedVoice } = useAppContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sound Effect Modes
-  const sfxOptions = [
-    { id: 'comedy', name: '90s Comedy', desc: '"Tung Poh!" Drum', icon: '🥁' },
-    { id: 'cartoon', name: 'Cartoon', desc: '"Boing" & "Slips"', icon: '🪀' },
-    { id: 'laughter', name: 'Sitcom', desc: '"Ha Ha Ha" FX', icon: '😆' },
-    { id: 'game', name: 'Retro Game', desc: '8-bit Pings', icon: '👾' },
-    { id: 'off', name: 'No Effects', desc: 'Just Silence', icon: '🔇' },
+  // 90s Thai Comedian Voice Options
+  const voiceOptions = [
+    { id: 'Puck', name: 'Nong Joke', desc: 'Energetic & Prankster (High Energy)', icon: '🤪', color: 'bg-yellow-500' },
+    { id: 'Fenrir', name: 'Uncle Kom', desc: 'Deep, Raspy & Aggressive (Hard Roast)', icon: '🤬', color: 'bg-red-700' },
+    { id: 'Charon', name: 'Boss Thep', desc: 'Serious, Deep & Deadpan', icon: '🕶️', color: 'bg-blue-900' },
+    { id: 'Zephyr', name: 'Je Mam', desc: 'Sassy, Fast & High-pitched', icon: '💃', color: 'bg-pink-500' },
   ];
 
   const scrollToBottom = () => {
@@ -49,56 +51,48 @@ const Chat: React.FC = () => {
     }
   }, []);
 
-  // Strict Ad Watch Logic (localStorage based)
-  const checkAdReward = () => {
-    const lastClickStr = localStorage.getItem('kuba_ad_click_ts');
-    if (lastClickStr) {
-      const lastClickTime = parseInt(lastClickStr, 10);
-      const elapsed = Date.now() - lastClickTime;
-      
-      // Clear the timestamp so it doesn't trigger again automatically
-      localStorage.removeItem('kuba_ad_click_ts');
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-      // Requirement: 15 seconds
-      if (elapsed >= 15000) {
-        setIsLoading(true);
-        setTimeout(() => {
-          addQuota();
-          setIsLoading(false);
-          playSoundEffect('game');
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'model',
-            text: `✅ เยี่ยมมาก! ดูโฆษณาจบครบถ้วน รับโควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้ง!\n(Ad verified. Quota replenished.)`,
-            timestamp: Date.now()
-          }]);
-        }, 800);
-      } else {
-        playSoundEffect('cartoon');
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'model',
-          text: `❌ เร็วไปพ่อหนุ่ม! ต้องดูโฆษณาอย่างน้อย 15 วินาที\n(Too fast! You must stay on the ad page for at least 15 seconds.)`,
-          timestamp: Date.now()
-        }]);
-      }
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+        handleSendMedia(audioBlob, 'audio');
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Cannot access microphone. Please check permissions.");
     }
   };
 
-  // Check on Mount and Visibility Change
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkAdReward();
-      }
-    };
-    
-    // Check immediately in case of reload
-    checkAdReward();
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  const toggleRecording = () => {
+    if (isRecording) {
+      handleStopRecording();
+    } else {
+      handleStartRecording();
+    }
+  };
 
   const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -113,23 +107,23 @@ const Chat: React.FC = () => {
     });
   };
 
-  const handleSendMedia = async (file: File) => {
+  const handleSendMedia = async (blob: Blob, type: 'audio' | 'image') => {
     if (state.dailyQuota <= 0) {
-      handleWatchAd(false); // Prompt user
+      handleWatchAd();
       return;
     }
 
-    const base64Data = await blobToBase64(file);
-    const mimeType = file.type;
-    const displayUrl = URL.createObjectURL(file);
+    const base64Data = await blobToBase64(blob);
+    const mimeType = blob.type || (type === 'audio' ? 'audio/webm' : 'image/jpeg');
+    const displayUrl = URL.createObjectURL(blob);
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      text: "📷 Image Upload",
+      text: type === 'audio' ? "🎤 Voice Message" : "📷 Image Upload",
       timestamp: Date.now(),
       attachment: {
-        type: 'image',
+        type: type,
         url: displayUrl,
         mimeType: mimeType
       }
@@ -139,7 +133,6 @@ const Chat: React.FC = () => {
     decrementQuota();
 
     try {
-        // Send Image to Gemini
         const { text: responseText, sources } = await generateTrollResponse({ data: base64Data, mimeType }, state.language);
 
         const aiMsg: ChatMessage = {
@@ -153,16 +146,15 @@ const Chat: React.FC = () => {
         setMessages(prev => [...prev, aiMsg]);
         incrementBalance(INTERACTION_REWARD);
 
-        // Play SFX only
         if (isSoundEnabled) {
-          playSoundEffect(state.soundMode);
+          playTextToSpeech(responseText);
         }
     } catch (error) {
         console.error("Media processing failed", error);
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'model',
-            text: "My brain failed to process that image. Try again!",
+            text: "My brain failed to process that. Try again!",
             timestamp: Date.now()
         }]);
     } finally {
@@ -173,7 +165,7 @@ const Chat: React.FC = () => {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      handleSendMedia(file);
+      handleSendMedia(file, 'image');
     }
   };
 
@@ -182,7 +174,7 @@ const Chat: React.FC = () => {
     
     if (!textToSend.trim()) return;
     if (state.dailyQuota <= 0) {
-      handleWatchAd(false); // Prompt user
+      handleWatchAd();
       return;
     }
 
@@ -212,9 +204,8 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, aiMsg]);
       incrementBalance(INTERACTION_REWARD);
 
-      // Play SFX
       if (isSoundEnabled) {
-        playSoundEffect(state.soundMode);
+        playTextToSpeech(responseText);
       }
       
     } catch (error) {
@@ -229,7 +220,6 @@ const Chat: React.FC = () => {
         };
         setMessages(prev => [...prev, aiMsg]);
         incrementBalance(INTERACTION_REWARD);
-        if (isSoundEnabled) playSoundEffect(state.soundMode);
       } catch (localError) {
         console.error("Critical Failure", localError);
       }
@@ -238,38 +228,50 @@ const Chat: React.FC = () => {
     }
   };
 
-  const handleWatchAd = async (direct: boolean = true) => {
-    // If not direct (triggered by typing), confirm first
-    if (!direct) {
-      if (!window.confirm("Quota หมดแล้วจ้า! ไปดูโฆษณาแก้เซ็งสักแป๊บมั้ย? (Open Ad Link to get +3 Chats)")) {
-        return;
-      }
-    }
-      
-    // 1. Mark Start Time in Storage (Survives app close/reload)
-    localStorage.setItem('kuba_ad_click_ts', Date.now().toString());
+  const playTextToSpeech = async (text: string) => {
+    if (isSpeaking) return;
+    setIsSpeaking(true);
+    
+    const cleanText = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
+    
+    // Pass selected voice from state
+    await generateSpeech(cleanText, state.selectedVoice);
+    
+    setTimeout(() => setIsSpeaking(false), 3000);
+  };
 
-    // 2. Try to trigger Monetag Interstitial SDK if loaded
-    try {
-      if ((window as any).show_10194784) {
-        console.log("Triggering Monetag SDK Interstitial...");
-        (window as any).show_10194784().then(() => {
-          console.log("Ad shown via SDK");
-        });
-      }
-    } catch (e) {
-      console.warn("Ad SDK trigger failed, falling back to link", e);
-    }
+  const handleWatchAd = async () => {
+    if (window.Adsgram) {
+      try {
+        const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+        const result = await AdController.show();
 
-    // 3. Open Direct Link (Primary monetization method)
-    // Use Telegram's openLink for better compatibility (requires v6.4+), fallback to window.open
-    setTimeout(() => {
-      if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
-        window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
+        if (result.done) {
+          addQuota();
+          alert("Success! +2 Chats added. 📺✅");
+        } else {
+          alert("Ad skipped or failed. No quota added.");
+        }
+      } catch (error) {
+        fallbackAd();
+      }
+    } else {
+      fallbackAd();
+    }
+  };
+
+  const fallbackAd = () => {
+    if (window.confirm("Video Ad unavailable. Open partner link instead for +2 chats?")) {
+      if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(AD_URL, { try_instant_view: false });
       } else {
-        window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
+        window.open(AD_URL, '_blank', 'noopener,noreferrer');
       }
-    }, 300); // Small delay to let SDK try first
+      setTimeout(() => {
+        addQuota();
+        alert("Thanks! +2 Quota added.");
+      }, 3000);
+    }
   };
 
   const handleShare = () => {
@@ -277,20 +279,17 @@ const Chat: React.FC = () => {
     const shareText = "This KUBA AI is roasting me in poems! 🤣 Come earn coins.";
     const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`;
 
-    // openTelegramLink requires v6.4+
-    if (window.Telegram?.WebApp?.openTelegramLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
+    if (window.Telegram?.WebApp?.openTelegramLink) {
         window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
     } else {
         window.open(telegramShareUrl, '_blank');
     }
     incrementBalance(100);
-    playSoundEffect('game');
   };
 
   const handleSnapshot = async () => {
     if (!chatContainerRef.current || !window.html2canvas) return;
     try {
-      playSoundEffect('cartoon');
       const canvas = await window.html2canvas(chatContainerRef.current, {
         backgroundColor: '#1a1a1a',
         ignoreElements: (element) => element.tagName === 'BUTTON' || element.tagName === 'INPUT'
@@ -306,7 +305,6 @@ const Chat: React.FC = () => {
 
   const handleFeedback = async (msgId: string, type: 'up' | 'down') => {
     setMessages(prev => prev.map(msg => msg.id === msgId ? { ...msg, feedback: type } : msg));
-    playSoundEffect('cartoon');
     try {
         await fetch('/api/feedback', {
             method: 'POST',
@@ -317,7 +315,7 @@ const Chat: React.FC = () => {
   };
 
   const getChaosBadge = (id: string) => {
-    const badges = ['🤡', '🤪', '💩', '🥁', '👺', '👻'];
+    const badges = ['🤡', '🎤', '💩', '🥁', '🤪', '🎸', '🤣', '👻'];
     return badges[parseInt(id.slice(-3)) % badges.length];
   };
 
@@ -325,48 +323,42 @@ const Chat: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
-      {/* Studio Settings Modal (SFX Only) */}
+      {/* Voice Selection Modal */}
       {showVoiceModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 border-2 border-kuba-yellow rounded-2xl p-6 w-full max-w-sm relative shadow-2xl animate-bounce-slow max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-900 border-2 border-kuba-yellow rounded-2xl p-6 w-full max-w-sm relative shadow-2xl animate-bounce-slow">
             <button 
               onClick={() => setShowVoiceModal(false)}
               className="absolute top-2 right-2 text-gray-400 hover:text-white text-xl"
             >
               ✕
             </button>
-            <h3 className="text-xl font-black text-kuba-yellow uppercase text-center mb-4 tracking-wider border-b border-gray-700 pb-2">
-              ⚙️ Studio FX
+            <h3 className="text-xl font-black text-kuba-yellow uppercase text-center mb-4 tracking-wider">
+              🎭 Select Comedian Voice
             </h3>
-            
-            {/* Sound Effect Selection */}
-            <div>
-              <h4 className="text-white font-bold mb-2 text-sm uppercase">Sound Effects</h4>
-              <div className="space-y-2">
-                {sfxOptions.map((sfx) => (
-                   <button
-                    key={sfx.id}
-                    onClick={() => {
-                      setSoundMode(sfx.id as any);
-                      playSoundEffect(sfx.id);
-                    }}
-                    className={`w-full flex items-center p-3 rounded-lg border transition-all ${
-                      state.soundMode === sfx.id 
-                        ? 'bg-blue-900 border-blue-400 text-white' 
-                        : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-750'
-                    }`}
-                   >
-                     <span className="text-xl mr-3">{sfx.icon}</span>
-                     <div className="flex flex-col text-left">
-                       <span className="font-bold text-sm">{sfx.name}</span>
-                       <span className="text-[10px] opacity-70">{sfx.desc}</span>
-                     </div>
-                     {state.soundMode === sfx.id && <span className="ml-auto text-green-400 font-bold">✓</span>}
-                   </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              {voiceOptions.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => {
+                    setSelectedVoice(v.id);
+                    setShowVoiceModal(false);
+                    playTextToSpeech("Test 1, 2, 3... Ha ha ha!");
+                  }}
+                  className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all active:scale-95 ${
+                    state.selectedVoice === v.id 
+                      ? 'border-white bg-kuba-yellow text-black shadow-[0_0_15px_gold]' 
+                      : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-500'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-full ${v.color} flex items-center justify-center text-2xl mb-2 shadow-inner border border-black/20`}>
+                    {v.icon}
+                  </div>
+                  <span className="font-bold text-sm">{v.name}</span>
+                  <span className="text-[10px] text-center opacity-80 leading-tight mt-1">{v.desc}</span>
+                </button>
+              ))}
             </div>
-
           </div>
         </div>
       )}
@@ -377,7 +369,7 @@ const Chat: React.FC = () => {
           <span className="text-gray-400 font-mono">QUOTA: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
         </div>
         
-        {/* Sound Settings Toggle */}
+        {/* Voice Toggle */}
         <div className="flex bg-gray-700 rounded-lg p-1 gap-1">
           <button 
             onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
@@ -389,14 +381,15 @@ const Chat: React.FC = () => {
           >
             {isSoundEnabled ? '🔊' : '🔇'}
           </button>
-          
-           <button 
-              onClick={() => setShowVoiceModal(true)}
-              className="p-2 rounded-md bg-gray-600 text-white text-xs hover:bg-gray-500 active:scale-90 flex items-center gap-1"
-              title="Studio Settings"
-           >
-              <span>⚙️</span>
-           </button>
+          {isSoundEnabled && (
+             <button 
+                onClick={() => setShowVoiceModal(true)}
+                className="p-2 rounded-md bg-gray-600 text-white text-xs hover:bg-gray-500 active:scale-90"
+                title="Change Voice"
+             >
+                🎭
+             </button>
+          )}
         </div>
 
         <button onClick={handleSnapshot} className="bg-gray-700 text-gray-300 p-2 rounded-lg text-xs" title="Snapshot">📸</button>
@@ -420,7 +413,7 @@ const Chat: React.FC = () => {
         {/* Marquee */}
         <div className="w-full bg-yellow-900/80 text-yellow-200 text-[10px] font-mono py-1 px-2 rounded overflow-hidden whitespace-nowrap mb-2 border border-yellow-500 border-dashed">
           <div className="animate-marquee inline-block">
-             ⚠️ AI PERSONA: 90s COMEDIAN. SFX: {sfxOptions.find(s => s.id === state.soundMode)?.name}.
+             ⚠️ AI PERSONA: 90s COMEDIAN POET (ตลกคาเฟ่). VOICE: {voiceOptions.find(v => v.id === state.selectedVoice)?.name || 'Nong Joke'}.
           </div>
         </div>
         
@@ -442,6 +435,9 @@ const Chat: React.FC = () => {
               {/* Attachment Display */}
               {msg.attachment && msg.attachment.type === 'image' && (
                 <img src={msg.attachment.url} alt="Uploaded" className="w-full rounded-lg mb-2 border-2 border-black" />
+              )}
+              {msg.attachment && msg.attachment.type === 'audio' && (
+                <div className="text-xs mb-1 italic">🎤 Audio Clip Sent</div>
               )}
 
               <p className={`leading-relaxed whitespace-pre-wrap ${msg.role === 'model' ? 'font-mono font-bold text-base italic' : ''}`}>
@@ -469,6 +465,15 @@ const Chat: React.FC = () => {
               )}
 
               <div className="flex justify-between items-center mt-2">
+                {msg.role === 'model' && (
+                  <button 
+                    onClick={() => playTextToSpeech(msg.text)}
+                    className={`opacity-60 hover:opacity-100 active:scale-90 transition-all text-lg ${isSpeaking ? 'animate-pulse text-red-500' : ''}`}
+                    title="Replay Audio"
+                  >
+                    🔊
+                  </button>
+                )}
                 <span className="text-[10px] opacity-40 font-mono font-bold tracking-widest uppercase ml-auto">
                   {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </span>
@@ -487,7 +492,7 @@ const Chat: React.FC = () => {
         {isLoading && (
           <div className="flex justify-start relative z-10 pl-2">
              <div className="bg-white text-black p-4 rounded-2xl rounded-tl-none text-xs font-mono font-black animate-wiggle shadow-[6px_6px_0px_0px_#000] border-4 border-black rotate-1">
-               ✍️ COMPOSING A SICK RHYME...
+               {isRecording ? "👂 LISTENING..." : "✍️ COMPOSING A SICK RHYME..."}
              </div>
           </div>
         )}
@@ -515,21 +520,30 @@ const Chat: React.FC = () => {
                 🖼️
               </button>
 
-              <div className="flex-grow relative">
-                <input 
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder={"Type a message..."}
-                  disabled={isLoading}
-                  className={`w-full h-full bg-black/90 text-white border-4 border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-kuba-yellow focus:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all font-bold text-sm`}
-                />
-              </div>
+              {/* Mic Button - Toggle Record */}
+              <button
+                onClick={toggleRecording}
+                className={`w-14 h-full rounded-xl font-black text-2xl border-4 border-gray-700 flex items-center justify-center transition-all ${
+                  isRecording 
+                    ? 'bg-red-600 text-white animate-pulse border-red-800 scale-105 shadow-[0_0_15px_red]' 
+                    : 'bg-gray-900 text-white active:scale-95'
+                }`}
+              >
+                {isRecording ? '⏹' : '🎙️'}
+              </button>
 
+              <input 
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder={isRecording ? "Recording..." : "Type/Img/Mic..."}
+                disabled={isLoading || isRecording}
+                className="flex-grow bg-black/90 text-white border-4 border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-kuba-yellow focus:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition-all font-bold text-sm"
+              />
               <button 
                 onClick={() => handleSendMessage()}
-                disabled={isLoading}
+                disabled={isLoading || isRecording}
                 className="px-5 rounded-xl font-black transition-all text-xl border-4 bg-kuba-yellow text-black border-black shadow-[4px_4px_0px_0px_#fff] active:translate-x-1 active:translate-y-1 active:shadow-none hover:-translate-y-1"
               >
                 ➤
@@ -537,10 +551,10 @@ const Chat: React.FC = () => {
             </>
           ) : (
             <button 
-              onClick={() => handleWatchAd(true)}
+              onClick={handleWatchAd}
               className="w-full bg-green-600 text-white font-black py-4 rounded-xl shadow-[4px_4px_0px_0px_#000] active:shadow-none active:translate-y-1 transition-all uppercase animate-pulse border-4 border-green-800 flex items-center justify-center gap-2"
             >
-              🚀 CLICK TO SUPPORT (GET +3)
+              📺 WATCH AD (+2 CHATS)
             </button>
           )}
         </div>

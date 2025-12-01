@@ -15,7 +15,7 @@ interface AppContextType {
   decrementQuota: () => void;
   addQuota: () => void;
   setLanguage: (lang: string) => void;
-  setSoundMode: (mode: 'off' | 'comedy' | 'cartoon' | 'game' | 'laughter') => void;
+  setSelectedVoice: (voice: string) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -53,13 +53,14 @@ const App: React.FC = () => {
       lastResetDate: today,
       hasSeenAdToday: false,
       language: tgUser?.language_code || navigator.language || 'en-US',
-      soundMode: 'comedy' // Default Sound Mode (90s Style)
+      selectedVoice: 'Puck' // Default Voice
     };
 
     if (saved) {
       const parsed = JSON.parse(saved);
       const mergedState = { ...parsed, telegramUserId: userId, telegramUsername: defaultState.telegramUsername };
-      if (!mergedState.soundMode) mergedState.soundMode = 'comedy';
+      // Ensure new fields exist if loading old state
+      if (!mergedState.selectedVoice) mergedState.selectedVoice = 'Puck';
       
       if (parsed.lastResetDate !== today) {
         return { ...mergedState, dailyQuota: INITIAL_QUOTA, lastResetDate: today, hasSeenAdToday: false };
@@ -81,6 +82,7 @@ const App: React.FC = () => {
           
           if (data.isBanned) {
             alert("🚫 Your account has been banned for suspicious activity.");
+            // Handle ban logic (e.g., disable interactions)
           }
 
           // If server balance is higher (due to AdGem rewards), update local state
@@ -122,12 +124,12 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, language: lang }));
   };
 
-  const setSoundMode = (mode: 'off' | 'comedy' | 'cartoon' | 'game' | 'laughter') => {
-    setState(prev => ({ ...prev, soundMode: mode }));
+  const setSelectedVoice = (voice: string) => {
+    setState(prev => ({ ...prev, selectedVoice: voice }));
   };
 
   return (
-    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage, setSoundMode }}>
+    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage, setSelectedVoice }}>
       <HashRouter>
         <StartupRedirect />
         <Layout>
