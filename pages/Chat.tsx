@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
@@ -284,26 +283,15 @@ const Chat: React.FC = () => {
     // 1. Mark Start Time in Storage (Survives app close/reload)
     localStorage.setItem('kuba_ad_click_ts', Date.now().toString());
 
-    // 2. Try to trigger Monetag Interstitial SDK if loaded
-    try {
-      if ((window as any).show_10194784) {
-        console.log("Triggering Monetag SDK Interstitial...");
-        (window as any).show_10194784().then(() => {
-          console.log("Ad shown via SDK");
-        });
-      }
-    } catch (e) {
-      console.warn("Ad SDK trigger failed, falling back to link", e);
-    }
-
-    // 3. Open Direct Link (Primary monetization method)
+    // 2. Open Direct Link (Primary monetization method)
+    // Removed automatic SDK trigger to prevent hidden popups
     setTimeout(() => {
       if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
         window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
       } else {
         window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
       }
-    }, 300); 
+    }, 100); 
   };
 
   const handleClaimDaily = () => {
