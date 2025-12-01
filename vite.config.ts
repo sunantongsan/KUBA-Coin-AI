@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
+      'process.env': {}, // Polyfill process.env object to prevent crashes in some libs
       'process.env.API_KEY': JSON.stringify(env.API_KEY)
     }
   };
