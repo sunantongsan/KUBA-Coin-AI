@@ -23,7 +23,10 @@ const aiDatabase: ResponseDatabase = {
       'ซื้อ': ['ซื้อตอนเขียว ขายตอนแดง\nสูตรสำเร็จแมงเม่าอย่างมึงไง'],
       'ขาย': ['ขายหมู หรือขายบ้าน\nดูทรงแล้วหมดตัวชัวร์'],
       'ดอย': ['หนาวมั้ยล่ะ ยอดดอย\nสมน้ำหน้าไอ้โง่'],
-      'ล้างพอร์ต': ['สะใจโว้ยยยย\nสมน้ำหน้า 555+']
+      'ล้างพอร์ต': ['สะใจโว้ยยยย\nสมน้ำหน้า 555+'],
+      'มั่ว': ['มั่วพ่อง! มึงน่ะแหละมั่ว\nสมองมีแค่นี้อย่ามาบ่น', 'เออ กูมั่ว แล้วมึงจะทำไม?\nเก่งจริงก็เขียนโค้ดเองสิไอ้สัส'],
+      'กาก': ['กากกว่ากู ก็หน้ามึงในกระจกนั่นแหละ', 'ด่ากูเจ็บคอเปล่าๆ\nเก็บเสียงไว้ร้องไห้ตอนพอร์ตแตกเถอะ'],
+      'ควาย': ['เรียกเพื่อนเหรอ?\nกูเป็น AI ไม่ใช่ญาติฝ่ายพ่อมึง', 'มอออออ... อ้าว นึกว่าเสียงมึง']
     },
     chaos: [
       'น้ำขึ้นให้รีบตัก น้ำหมักให้รีบกิน\nสมองพังภินท์ สิ้นคิดจริงๆ',
@@ -34,7 +37,8 @@ const aiDatabase: ResponseDatabase = {
       'กูไม่รู้โว้ย! อย่ามาเซ้าซี้\nเดี๋ยวกูโดดถีบขาคู่เลย',
       'มึงนี่มันตัวปัญหาจริงๆ\nไปถามคนอื่นไป๊ รำคาญ!',
       'เอ่อ... กูไม่ตอบ\nมึงจะทำไมกู ฮ้ะ!?',
-      'ไรสาระว่ะ มึงเนี่ย\nว่างมากก็ไปนอน เกะกะ'
+      'ไรสาระว่ะ มึงเนี่ย\nว่างมากก็ไปนอน เกะกะ',
+      'ด่ากูมากๆ เดี๋ยวปั๊ดเหนี่ยวเลย\nไปเล่นตรงนู้นไป๊'
     ],
     greetings: [
       'มาอีกละ... เบื่อขี้หน้าว่ะ',
@@ -145,7 +149,7 @@ export const getGreeting = (lang: string): string => {
 
 export const generateLocalResponse = async (text: string, userPreferredLang: string): Promise<string> => {
   // Simulate Thinking
-  await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
+  await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500));
 
   const cleanText = text.toLowerCase().trim();
   const langKey = detectLanguage(text, userPreferredLang);
@@ -181,19 +185,14 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
     }
   }
 
-  // 4. Wikipedia (Strict Filter to prevent "Brainless" dictionary dumps)
-  // Prevent searching for common chat words
-  const ignoreWords = [
-    'hello', 'hi', 'sawasdee', 'test', 'help', 'สวัสดี', 'ทัก', 'เทส', 'ตอบมา', 'ตอบ', 'answer', 'talk', 'คุย', 'ว่าไง', 'ไง', 'มึง', 'กู', 'สัส', 'เหี้ย', 'ควาย'
-  ];
+  // 4. Wikipedia - STRICT MODE (Only if explicitly asked)
+  // Fixes the "ตอบมั่วจัง" -> Wiki Dump issue.
+  const isQuestion = cleanText.match(/^(what is|who is|define|คืออะไร|ใครคือ|ข้อมูล|ประวัติ|รู้จักรึเปล่า|รู้จัก|ช่วยบอก)/i);
   
-  // Only search Wikipedia if the query is long enough and not in ignore list
-  const isIgnored = ignoreWords.some(word => cleanText.includes(word));
-  
-  if (!isIgnored && cleanText.length > 3) {
-      const query = cleanText.replace(/what is|who is|tell me about|คืออะไร|คือ|ช่วยบอก|รู้จัก|ไหม|ครับ|คะ|ป่ะ|วะ|มั้ย|ตอบมา|หน่อย|ที/gi, '').trim();
+  if (isQuestion && cleanText.length > 5) {
+      const query = cleanText.replace(/what is|who is|define|คืออะไร|ใครคือ|ข้อมูล|ประวัติ|รู้จักรึเปล่า|รู้จัก|ช่วยบอก|ไหม|ครับ|คะ|ป่ะ|วะ|มั้ย|ตอบมา|หน่อย|ที/gi, '').trim();
       
-      if (query.length > 2) {
+      if (query.length > 1) {
           const wiki = await fetchWikipediaSummary(query, langKey);
           if (wiki) {
               if (langKey === 'th-TH') return `เอ้า! ข้อมูลของ "${query}":\n${wiki}\n\n${getSuffix()}`;
@@ -202,6 +201,6 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       }
   }
 
-  // 5. Fallback: Guan Teen Persona
+  // 5. Fallback: Guan Teen Persona (Not Brainless anymore)
   return db.defaults[Math.floor(Math.random() * db.defaults.length)];
 };
