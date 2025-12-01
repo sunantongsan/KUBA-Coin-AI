@@ -416,6 +416,15 @@ const Chat: React.FC = () => {
         </div>
       )}
 
+      {/* PROMINENT DAILY REWARD CLAIM BUTTON (NEW) */}
+      {isMissionComplete && !state.dailyRewardClaimed && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 animate-bounce cursor-pointer" onClick={handleClaimDaily}>
+            <div className="bg-kuba-yellow text-black border-4 border-black px-6 py-2 rounded-full font-black text-lg shadow-[0_0_15px_rgba(255,215,0,0.8)] flex items-center gap-2 whitespace-nowrap hover:scale-105 transition-transform">
+              <span>🎁</span> CLAIM {DAILY_MISSION_REWARD} KUBA!
+            </div>
+        </div>
+      )}
+
       {/* Top Bar with Sound Toggle & Daily Mission */}
       <div className="flex flex-col gap-2 mb-2">
         
@@ -473,7 +482,7 @@ const Chat: React.FC = () => {
                onClick={handleClaimDaily}
                className="bg-kuba-yellow text-black text-[10px] font-black px-2 py-1 rounded animate-bounce border-2 border-black shadow-sm"
              >
-               CLAIM<br/>1000K
+               CLAIM
              </button>
           ) : (
              <button 
