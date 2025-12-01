@@ -30,12 +30,16 @@ const Home: React.FC = () => {
     return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ref_${myId}`;
   };
 
-  // UPDATED: Funny, Viral, Non-Scammy Copywriting
+  // UPDATED: Gangster Airdrop Marketing Copy (Viral & Funny)
   const getShareText = () => {
     const texts = [
-      `⚠️ WARNING: TOXIC AI DETECTED ⚠️\n\nI just got roasted by this Gangster Bot. 🤣\nIt pays you to fight with it.\n\nCome help me diss it back! 👇`,
-      `💬 Need a friend? Too bad.\nKUBA AI is here to ruin your day and give you coins.\n\nTry not to cry. 🥲\n\n👇 CHALLENGE ACCEPTED:`,
-      `🥊 FIGHT CLUB: HUMAN vs AI\n\nThis bot has zero chill. Enter the arena if you dare.\n(Free 2,000 Coins for new fighters)\n\n👇 JOIN HERE:`
+      `🔥 KUBA AIRDROP IS LIVE! But this AI is guarding it and it's TOXIC AF. 🤬\n\nCome help me fight it and steal the coins! 💰\n(Free ${WELCOME_BONUS.toLocaleString()} KUBA for new fighters)\n\n👇 JOIN THE GANG:`,
+      
+      `🤖 Man vs Machine: I just got roasted by KUBA AI. 💀\n\nJoin the chaos, beat the bot, and get FREE CRYPTO instantly! 🚀\n\n👇 CLAIM YOUR ${WELCOME_BONUS.toLocaleString()} KUBA:`,
+      
+      `💸 They said "Easy Money", they didn't say the AI would bite. 🐕\n\nCome get your free KUBA coins before I take them all!\nDon't be a chicken. 🐣\n\n👇 ENTER HERE:`,
+      
+      `⚠️ WARNING: This Bot has NO CHILL.\n\nIt pays you to argue with it. 🤣\nGrab your ${WELCOME_BONUS.toLocaleString()} KUBA Welcome Bonus now!\n\n👇 FIGHT CLUB LINK:`
     ];
     return texts[Math.floor(Math.random() * texts.length)];
   };
@@ -56,7 +60,9 @@ const Home: React.FC = () => {
         }
         break;
       case 'x':
-        window.open(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`, '_blank');
+        // Specifically for X, we can add hashtags or mentions
+        const xText = encodeURIComponent(text + "\n\n@KubacoinAirdrop #KUBA #Airdrop #Crypto");
+        window.open(`https://twitter.com/intent/tweet?text=${xText}&url=${encodedUrl}`, '_blank');
         break;
       case 'fb':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
