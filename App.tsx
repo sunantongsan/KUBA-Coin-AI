@@ -40,10 +40,18 @@ const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => {
     const today = new Date().toDateString();
     
-    // 1. Get User ID
+    // 1. Get User ID & Language
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     const userId = tgUser?.id || null;
     const storageKey = userId ? `kuba_data_v1_${userId}` : 'kuba_data_v1_guest';
+
+    // Normalize Language Detection
+    const rawLang = tgUser?.language_code || navigator.language || 'en';
+    let detectedLang = 'en-US';
+    if (rawLang.toLowerCase().includes('th')) detectedLang = 'th-TH';
+    else if (rawLang.toLowerCase().includes('zh')) detectedLang = 'zh-CN';
+    else if (rawLang.toLowerCase().includes('es')) detectedLang = 'es-ES';
+    else if (rawLang.toLowerCase().includes('ja')) detectedLang = 'ja-JP';
 
     // 2. Load Local Data
     const saved = localStorage.getItem(storageKey);
@@ -54,7 +62,7 @@ const App: React.FC = () => {
       dailyQuota: INITIAL_QUOTA,
       lastResetDate: today,
       hasSeenAdToday: false,
-      language: tgUser?.language_code || navigator.language || 'en-US',
+      language: detectedLang, // Use normalized detected language
       soundMode: 'comedy', // Default Sound Mode (90s Style)
       adsWatchedToday: 0,
       dailyRewardClaimed: false,
