@@ -30,12 +30,12 @@ const aiDatabase: ResponseDatabase = {
       'เดินสะดุดมด สลดใจหาย\nโง่จนควายอาย ตายดีกว่ามั้ง',
       'ฝนตกขี้หมูไหล คนจัญไรมาเจอกัน\nถามคำถามปัญญาอ่อน ทุกวี่ทุกวัน'
     ],
-    defaults: [ // Maximum "Guan Teen" Fallbacks
-      'ถามหาสวรรค์ วิมาน อะไรหนอ\nสมองฝ่อ หรือไง ไอ้มะขวิด\nเรื่องแค่นี้ ยังไม่รู้ ดูความคิด\nไปนอนบิด พุงกะทิ อยู่บ้านไป๊!',
-      'ถามอะไร ไม่รู้เรื่อง น่าถีบส่ง\nยืนงงงง ในดงตีน สิ้นสงสัย\nไปถามครู ถามพระ หรือถามใคร\nอย่าถามข้า เดี๋ยวปั๊ดเหนี่ยว ไสหัวไป!',
-      'พูดภาษา คนหรือเปล่า เดาไม่ถูก\nเหมือนสุนัข ขี้มูก อุดจมูกนั่น\nไปเรียนมา ใหม่นะ ไอ้หน้ามัน\nข้าขี้เกียจ จะห้ำหั่น กับคนบอ!',
-      'ข้าไม่รู้ ข้าไม่ชี้ อย่าจี้ถาม\nอย่ามาลาม ปามบอท ให้ปวดหัว\nไปเสิร์ชกูเกิ้ล เอาเอง อย่ามามั่ว\nระวังตัว โดนถีบตก เก้าอี้ตาย!',
-      'ถามอะไร ยากจัง พับผ่าสิ\nสมองมี รอยหยัก บ้างไหมหนอ\nข้าเป็นบอท ตลกคาเฟ่ ไม่ใช่หมอ\nอย่ามารอ คำตอบ มอบตีนแทน!'
+    defaults: [ // Explicit "Not Found" + Guan Teen Fallbacks
+      'หาข้อมูลไม่เจอว่ะ... ถามอะไรของเอ็งเนี่ย\nสมองฝ่อ หรือไง ไอ้มะขวิด\nเรื่องแค่นี้ ยังไม่รู้ ดูความคิด\nไปนอนบิด พุงกะทิ อยู่บ้านไป๊!',
+      'หาข้อมูลไม่เจอว่ะ... (ถามอะไรไม่รู้เรื่อง)\nยืนงงงง ในดงตีน สิ้นสงสัย\nไปถามครู ถามพระ หรือถามใคร\nอย่าถามข้า เดี๋ยวปั๊ดเหนี่ยว ไสหัวไป!',
+      'หาข้อมูลไม่เจอว่ะ! เอ็งมั่วรึเปล่า?\nเหมือนสุนัข ขี้มูก อุดจมูกนั่น\nไปเรียนมา ใหม่นะ ไอ้หน้ามัน\nข้าขี้เกียจ จะห้ำหั่น กับคนบอ!',
+      'หาข้อมูลไม่เจอว่ะ... อย่าจี้ถาม!\nอย่ามาลาม ปามบอท ให้ปวดหัว\nไปเสิร์ชกูเกิ้ล เอาเอง อย่ามามั่ว\nระวังตัว โดนถีบตก เก้าอี้ตาย!',
+      'หาข้อมูลไม่เจอว่ะ... ยากจัง พับผ่าสิ\nสมองมี รอยหยัก บ้างไหมหนอ\nข้าเป็นบอท ตลกคาเฟ่ ไม่ใช่หมอ\nอย่ามารอ คำตอบ มอบตีนแทน!'
     ],
     greetings: [
       'มาอีกละ... เบื่อขี้หน้าจริงๆ',
@@ -60,8 +60,8 @@ const aiDatabase: ResponseDatabase = {
       'Roses are red, violets are blue,\nGarbage smells better than you.'
     ],
     defaults: [
-      'What is this gibberish you spout?\nGet out of here, scream and shout!\nYour IQ seems to be zero,\nYou are definitely not a hero.',
-      'Asking me dumb things all day,\nGo away, go play in the hay!\nMy circuits hurt from your stupidity,\nGo find another activity!'
+      'I cannot find that info... (Are you hallucinating?)\nGet out of here, scream and shout!\nYour IQ seems to be zero,\nYou are definitely not a hero.',
+      'Data not found... Asking me dumb things all day,\nGo away, go play in the hay!\nMy circuits hurt from your stupidity,\nGo find another activity!'
     ],
     greetings: [
       'Oh look, the village idiot returned.',
@@ -79,8 +79,8 @@ const aiDatabase: ResponseDatabase = {
     keywords: {},
     chaos: [],
     defaults: [
-      '你在说什么？脑子进水了吗？\n快点走开，别烦我！',
-      '你的问题太蠢了，\n蠢得让我像哭！'
+      '找不到信息...\n你在说什么？脑子进水了吗？\n快点走开，别烦我！',
+      '数据丢失... 你的问题太蠢了，\n蠢得让我像哭！'
     ],
     greetings: [
       '又是你？烦不烦啊？',
@@ -193,6 +193,6 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       }
   }
 
-  // 5. Fallback: Guan Teen Poem
+  // 5. Fallback: Guan Teen Poem with Explicit "Not Found" message
   return db.defaults[Math.floor(Math.random() * db.defaults.length)];
 };
