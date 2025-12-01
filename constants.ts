@@ -12,8 +12,8 @@ export const ADGEM_POSTBACK_KEY = "h2j5bd7989nb1g3j03ea0d1k";
 export const ADGEM_BANNED_SECRET = "5lblnajen32hid6095ad8hdl";
 
 // Ad Network Configuration (Direct Link)
-// Currently using: HilltopAds (Zone #6717098)
-export const MONETAG_DIRECT_LINK = "https://firsthandhall.com/DH5tgh"; 
+// Reverted to Monetag (otieu.com) as per user request for better revenue
+export const MONETAG_DIRECT_LINK = "https://otieu.com/4/10189801"; 
 export const AD_URL = MONETAG_DIRECT_LINK;
 
 // Telegram Configuration

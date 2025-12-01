@@ -14,6 +14,7 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [adStartTime, setAdStartTime] = useState<number | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -48,6 +49,44 @@ const Chat: React.FC = () => {
       }]);
     }
   }, []);
+
+  // Ad Watch Verification Logic
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && adStartTime) {
+        const elapsed = Date.now() - adStartTime;
+        setAdStartTime(null); // Reset timer
+
+        // Require at least 15 seconds to count as "Watched"
+        if (elapsed < 15000) {
+          playSoundEffect('cartoon'); // Fail sound
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'model',
+            text: `❌ กลับมาไวไปไหม! ดูโฆษณายังไม่จบเลยไอ้ทิด!\n(Too fast! You must watch the ad for at least 15 seconds.)`,
+            timestamp: Date.now()
+          }]);
+        } else {
+          // Success
+          setIsLoading(true);
+          setTimeout(() => {
+            addQuota();
+            setIsLoading(false);
+            playSoundEffect('game'); // Success Sound
+            setMessages(prev => [...prev, {
+              id: Date.now().toString(),
+              role: 'model',
+              text: `✅ เยี่ยมมาก! ได้โควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้งแล้ว\n(Great job! Quota replenished.)`,
+              timestamp: Date.now()
+            }]);
+          }, 1000);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [adStartTime]);
 
   const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -195,27 +234,16 @@ const Chat: React.FC = () => {
       }
     }
       
+    // Set start time for verification
+    setAdStartTime(Date.now());
+
     // Use Telegram's openLink for better compatibility (requires v6.4+), fallback to window.open
     if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
       window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
     } else {
       window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
     }
-
-    // Simulate reward grant logic
-    setIsLoading(true);
-    setTimeout(() => {
-      addQuota();
-      setIsLoading(false);
-      playSoundEffect('game'); // Success Sound
-      // Show success message
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'model',
-        text: `เยี่ยมมากไอ้ทิด! ได้โควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้งแล้ว\n(Great job! Quota replenished.)`,
-        timestamp: Date.now()
-      }]);
-    }, 5000); // 5 seconds wait
+    // Logic continues in useEffect via visibilitychange
   };
 
   const handleShare = () => {
