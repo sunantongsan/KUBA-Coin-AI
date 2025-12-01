@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
 import { CONTRACT_ADDRESS, KUBA_LOGO_URL, ADGEM_APP_ID } from '../constants';
@@ -49,7 +50,8 @@ const Wallet: React.FC = () => {
   const handleGenerateMascot = () => {
     setIsGenerating(true);
     const randomSeed = Math.random().toString(36).substring(7);
-    const newUrl = `https://robohash.org/${randomSeed}.png?set=set2&size=200x200`;
+    // Updated to generate "Yellow Gangster" style avatars (DiceBear Micah)
+    const newUrl = `https://api.dicebear.com/9.x/micah/png?seed=${randomSeed}&backgroundColor=ffd700&radius=50`;
     
     const img = new Image();
     img.src = newUrl;
@@ -84,8 +86,9 @@ const Wallet: React.FC = () => {
     <div className="flex flex-col items-center space-y-6 animate-fade-in pb-10">
       
       <div className="w-full flex items-center gap-3 bg-gray-900 p-3 rounded-xl border border-gray-800">
-        <div className="w-10 h-10 bg-kuba-yellow rounded-full flex items-center justify-center font-bold text-black">
-          {state.telegramUsername ? state.telegramUsername.charAt(0).toUpperCase() : 'G'}
+        <div className="w-10 h-10 bg-kuba-yellow rounded-full flex items-center justify-center font-bold text-black border-2 border-white overflow-hidden">
+           {/* Show Mini Avatar instead of initial if available */}
+           <img src={mascotUrl} alt="User" className="w-full h-full object-cover" />
         </div>
         <div className="flex-col overflow-hidden">
           <h3 className="text-sm font-bold text-white truncate">
@@ -103,17 +106,18 @@ const Wallet: React.FC = () => {
             <img 
               src={mascotUrl} 
               alt="KUBA Mascot" 
-              className={`w-24 h-24 rounded-full border-4 border-kuba-yellow mb-2 shadow-lg bg-gray-800 ${isGenerating ? 'animate-spin opacity-50' : animClass}`}
+              className={`w-32 h-32 rounded-full border-4 border-kuba-yellow mb-2 shadow-lg bg-kuba-yellow ${isGenerating ? 'animate-spin opacity-50' : animClass}`}
             />
             <button 
                 onClick={handleGenerateMascot}
                 disabled={isGenerating}
-                className="absolute bottom-2 right-0 bg-gray-900 text-white p-2 rounded-full border border-gray-600 shadow-md active:scale-90 transition-transform hover:bg-gray-800 z-10"
+                className="absolute bottom-2 right-0 bg-black text-white p-2 rounded-full border-2 border-kuba-yellow shadow-md active:scale-90 transition-transform hover:bg-gray-800 z-10"
+                title="Generate New Look"
             >
-                🎨
+                🎲
             </button>
          </div>
-        <h2 className="text-xl font-bold tracking-widest uppercase">My Stash</h2>
+        <h2 className="text-xl font-bold tracking-widest uppercase text-kuba-yellow">My Gangster Look</h2>
       </div>
 
       <div className="w-full bg-gradient-to-br from-gray-800 to-black border border-gray-700 rounded-2xl p-6 shadow-2xl relative overflow-hidden">

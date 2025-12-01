@@ -27,6 +27,7 @@ const Home: React.FC = () => {
 
   const getRefLink = () => {
     const myId = state.telegramUserId || 'guest';
+    // Generates: https://t.me/kubaminer_bot?start=ref_12345
     return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ref_${myId}`;
   };
 
@@ -109,7 +110,7 @@ const Home: React.FC = () => {
                {/* "Image" Area */}
                <div className="h-32 bg-gray-800 flex items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-blue-900 opacity-50"></div>
-                  <img src={KUBA_LOGO_URL} className="w-20 h-20 rounded-full border-4 border-white shadow-lg relative z-10" />
+                  <img src={KUBA_LOGO_URL} className="w-20 h-20 rounded-full border-4 border-white shadow-lg relative z-10 bg-kuba-yellow" />
                   <div className="absolute bottom-2 right-2 bg-black/70 text-kuba-yellow text-[10px] font-bold px-2 py-1 rounded">
                      AI CHATBOT
                   </div>
@@ -159,7 +160,7 @@ const Home: React.FC = () => {
         <img 
           src={KUBA_LOGO_URL} 
           alt="KUBA Logo" 
-          className={`relative w-36 h-36 rounded-full border-4 border-kuba-black shadow-2xl transform transition hover:scale-105 ${animClass}`}
+          className={`relative w-36 h-36 rounded-full border-4 border-kuba-black shadow-2xl transform transition hover:scale-105 bg-kuba-yellow ${animClass}`}
         />
         <div className="absolute bottom-0 right-0 bg-white text-black text-xs font-bold px-2 py-1 rounded-full border border-black transform rotate-12 shadow-lg">
           AI Gangster

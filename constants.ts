@@ -1,7 +1,10 @@
 
+
 export const CONTRACT_ADDRESS = "EQDCCMpdq2lab20fVNcXTx44TrGfAnNDvWiFWt9wDfDUY5YT";
-export const KUBA_LOGO_URL = "https://iili.io/KbAT4Jp.png";
-export const MASCOT_IMAGE_URL = "https://picsum.photos/seed/kubamascot/200/200"; 
+// Using the specific Bald Guy image provided by user
+export const KUBA_LOGO_URL = "https://img5.pic.in.th/file/secure-sv1/bald-1.jpg";
+// Unified Mascot Image (Same as Logo)
+export const MASCOT_IMAGE_URL = KUBA_LOGO_URL; 
 export const INITIAL_QUOTA = 5;
 export const AD_REWARD_QUOTA = 2; // Reward 2 credits per ad as requested
 export const INTERACTION_REWARD = 200;
