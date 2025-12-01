@@ -8,10 +8,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // Define API_KEY specifically
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
-      // Polyfill empty process.env object to prevent crashes in some libs
-      'process.env': {}
+      // Define API_KEY specifically. 
+      // We rely on window.process in index.html for the global object to avoid replacement issues.
+      'process.env.API_KEY': JSON.stringify(env.API_KEY)
     },
     build: {
       rollupOptions: {
