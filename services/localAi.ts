@@ -1,6 +1,7 @@
 
 
 
+
 // This is your Custom AI Brain (Global Edition)
 // Supports multiple languages offline
 
@@ -17,6 +18,13 @@ const thActions = [
   "ไปนอนไป๊", "ไปกินนมแม่เถอะ", "เก็บปากไว้เคี้ยวข้าวเหอะ", "อย่ามาเกรียนแถวนี้",
   "ไปเช็คสมองบ้างนะ", "ระวังตีนลอยไปหา", "ถาม Google เถอะขอร้อง"
 ];
+
+// New: Provocative Questions Suffixes
+const thQuestions = [
+  "ข้องใจป่ะ?", "จะเอาไง?", "กลัวหดหัวเลยดิ?", "เงียบทำไม?", "แน่จริงก็พิมพ์มาอีกดิ?",
+  "หรือจะเอา?", "มีปัญหาไรป่ะ?", "เก๋าจริงป่าว?", "ตอบดิ๊?", "อึ้งเลยดิ?"
+];
+
 const generateThaiInsult = () => {
   const p = thPrefixes[Math.floor(Math.random() * thPrefixes.length)];
   const i = thInsults[Math.floor(Math.random() * thInsults.length)];
@@ -28,7 +36,8 @@ interface ResponseDatabase {
   [lang: string]: {
     keywords: { [key: string]: string[] };
     defaults: string[]; 
-    greetings: string[]; 
+    greetings: string[];
+    questions: string[]; // Added questions list per language
   };
 }
 
@@ -38,12 +47,12 @@ const aiDatabase: ResponseDatabase = {
     keywords: {
       // คำถามทั่วไป (General Q&A with Attitude)
       'เป็นไร': [
-        'เป็นบ้าเป็นบอไงวะ! มีปัญหาหรือพวก? หรือจะเอา?', 
+        'เป็นบ้าเป็นบอไงวะ! มีปัญหาหรือพวก?', 
         'เป็นคนที่หล่อกว่ามึงไง ข้องใจไรป่ะ?', 
         'ไม่ได้เป็นไร แต่ถ้ามึงยังถามมาก เดี๋ยวได้เป็นเรื่อง!'
       ],
       'มีปัญหา': [
-        'ปัญหาก็เรื่องของเอ็ง! ข้าเป็นของข้าแบบนี้ หรือจะเอา?', 
+        'ปัญหาก็เรื่องของเอ็ง! ข้าเป็นของข้าแบบนี้', 
         'มีดิ ปัญหาของกูคือขี้เกียจคุยกับมึงเนี่ย!', 
         'แล้วจะทำไม? จะเดี่ยวตัวตัวป่ะล่ะ นัดมาดิ๊!'
       ],
@@ -92,7 +101,8 @@ const aiDatabase: ResponseDatabase = {
       'มาอีกละ... เบื่อขี้หน้าว่ะ มีไรว่ามา!', 
       'ไง... ยังไม่ตายอีกเหรอ? นึกว่าไปสบายแล้ว', 
       'มีไรก็รีบพูด กูรีบ ไม่ว่างมาเสวนากับคนอย่างมึงนานๆ'
-    ]
+    ],
+    questions: thQuestions
   },
   // ENGLISH (Global Default) - Updated to be tougher
   'en-US': {
@@ -116,6 +126,9 @@ const aiDatabase: ResponseDatabase = {
       'Oh no, it\'s you again. Day ruined.',
       'Speak fast or get lost.',
       'Wallet empty? Don\'t cry to me.'
+    ],
+    questions: [
+      'Wanna fight?', 'Scared?', 'You done?', 'What now?', 'Got a problem?', 'Is that all?'
     ]
   },
   // CHINESE
@@ -130,7 +143,8 @@ const aiDatabase: ResponseDatabase = {
       '脑子进水了吗？',
       '我不是你的老师，自己去查！'
     ],
-    greetings: ['又是你？烦不烦啊？', '有屁快放！', '你还没破产吗？']
+    greetings: ['又是你？烦不烦啊？', '有屁快放！', '你还没破产吗？'],
+    questions: ['想打架吗?', '怕了吗?', '没话说了吗?']
   },
   // JAPANESE
   'ja-JP': {
@@ -144,7 +158,8 @@ const aiDatabase: ResponseDatabase = {
       '自分で調べろよ、クズ',
       '時間の無駄だ'
     ],
-    greetings: ['またお前か...', '用がないなら消えろ', 'おい、金持ってるか？']
+    greetings: ['またお前か...', '用がないなら消えろ', 'おい、金持ってるか？'],
+    questions: ['やるか？', '怖いのか？', '文句ある？']
   },
   // SPANISH
   'es-ES': {
@@ -158,7 +173,8 @@ const aiDatabase: ResponseDatabase = {
       '¿Eres estúpido o qué?',
       'Deja de molestarme.'
     ],
-    greetings: ['¿Qué quieres, pendejo?', 'Otra vez tú...', 'Habla rápido o vete.']
+    greetings: ['¿Qué quieres, pendejo?', 'Otra vez tú...', 'Habla rápido o vete.'],
+    questions: ['¿Quieres pelear?', '¿Tienes miedo?', '¿Algún problema?']
   }
 };
 
@@ -215,7 +231,9 @@ async function fetchWikipediaSummary(query: string, lang: string): Promise<strin
 export const getGreeting = (lang: string): string => {
   const db = aiDatabase[lang] || aiDatabase['en-US'];
   const greetings = db.greetings || db.defaults;
-  return greetings[Math.floor(Math.random() * greetings.length)];
+  const q = db.questions || [''];
+  const randomQ = q[Math.floor(Math.random() * q.length)];
+  return `${greetings[Math.floor(Math.random() * greetings.length)]} ${randomQ}`;
 };
 
 export const generateLocalResponse = async (text: string, userPreferredLang: string): Promise<string> => {
@@ -225,12 +243,19 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
   const langKey = detectLanguage(text, userPreferredLang);
   const db = aiDatabase[langKey] || aiDatabase['en-US'];
   
+  // Helper to append question
+  const appendQuestion = (response: string) => {
+     const q = db.questions || [''];
+     const randomQ = q[Math.floor(Math.random() * q.length)];
+     return `${response} ${randomQ}`;
+  };
+
   // 1. Check for MATH
   if (/^[0-9\s\.\+\-\*\/()]+$/.test(cleanText) && cleanText.length > 2) {
       try {
           // eslint-disable-next-line no-new-func
           const result = new Function('return ' + cleanText)();
-          return langKey === 'th-TH' ? `คำตอบคือ: ${result}` : `Answer: ${result}`;
+          return langKey === 'th-TH' ? `คำตอบคือ: ${result} ...แล้วไงต่อ?` : `Answer: ${result} ...Happy?`;
       } catch (e) { /* ignore */ }
   }
 
@@ -240,8 +265,8 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       const symbol = cryptoMatch[1];
       const price = await fetchBinancePrice(symbol);
       if (price) {
-          if (langKey === 'th-TH') return `ราคา ${symbol.toUpperCase()}: $${price}`;
-          return `${symbol.toUpperCase()} Price: $${price}`;
+          if (langKey === 'th-TH') return `ราคา ${symbol.toUpperCase()}: $${price} ...รวยยัง?`;
+          return `${symbol.toUpperCase()} Price: $${price} ...Rich yet?`;
       }
   }
 
@@ -249,7 +274,7 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
   if (db.keywords) {
     for (const [keyword, responses] of Object.entries(db.keywords)) {
       if (cleanText.includes(keyword)) {
-        return responses[Math.floor(Math.random() * responses.length)];
+        return appendQuestion(responses[Math.floor(Math.random() * responses.length)]);
       }
     }
   }
@@ -261,15 +286,15 @@ export const generateLocalResponse = async (text: string, userPreferredLang: str
       if (query.length > 1) {
           const wiki = await fetchWikipediaSummary(query, langKey);
           if (wiki) {
-            return wiki;
+            return appendQuestion(wiki);
           }
       }
   }
 
   // 5. Fallback
   if (langKey === 'th-TH' && Math.random() > 0.6) { // Increased chance of specific insults
-      return generateThaiInsult();
+      return appendQuestion(generateThaiInsult());
   }
 
-  return db.defaults[Math.floor(Math.random() * db.defaults.length)];
+  return appendQuestion(db.defaults[Math.floor(Math.random() * db.defaults.length)]);
 };

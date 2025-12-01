@@ -275,15 +275,35 @@ const Chat: React.FC = () => {
       }
   };
 
+  // Share Logic for Chat
+  const getRefLink = () => {
+    const myId = state.telegramUserId || 'guest';
+    return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ref_${myId}`;
+  };
+
+  const handleShare = () => {
+    const url = getRefLink();
+    const text = `FIGHT ME! 🥊\n\nI'm battling the rudest AI on Telegram.\nJoin now & get free crypto: https://t.me/${TELEGRAM_BOT_USERNAME}`;
+    const encodedUrl = encodeURIComponent(url);
+    const encodedText = encodeURIComponent(text);
+    const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+    
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(tgUrl);
+    } else {
+        window.open(tgUrl, '_blank');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full relative">
-       {/* Settings Modal (Reused from Voice Modal variable name) */}
+       {/* Settings Modal */}
        {showVoiceModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm p-5 shadow-2xl">
                <div className="flex justify-between items-center mb-4">
                   <h3 className="text-white font-bold uppercase tracking-wider">Sound FX Mode</h3>
-                  <button onClick={() => setShowVoiceModal(false)} className="text-gray-400 text-xl">✕</button>
+                  <button onClick={() => setShowVoiceModal(false)} className="text-gray-400 text-xl hover:text-white">✕</button>
                </div>
                <div className="space-y-2">
                  {sfxOptions.map((opt) => (
@@ -295,7 +315,7 @@ const Chat: React.FC = () => {
                       }}
                       className={`w-full flex items-center p-3 rounded-xl border transition-all ${
                          state.soundMode === opt.id 
-                         ? 'bg-kuba-yellow text-black border-kuba-yellow' 
+                         ? 'bg-kuba-yellow text-black border-kuba-yellow transform scale-105' 
                          : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
                       }`}
                     >
@@ -311,52 +331,77 @@ const Chat: React.FC = () => {
          </div>
        )}
 
-       {/* Daily Mission Bar */}
-       <div className="bg-gray-900 border-b border-gray-800 p-2 flex items-center justify-between text-xs px-4 shadow-md z-10">
+       {/* AD COUNTDOWN OVERLAY */}
+       {adCountdown !== null && adCountdown > 0 && (
+         <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+             <div className="absolute top-0 right-0 w-64 h-64 bg-kuba-yellow rounded-full filter blur-[120px] opacity-20 animate-pulse"></div>
+             
+             <h2 className="text-4xl font-black text-white italic mb-2 tracking-tighter uppercase animate-bounce-slow">
+                WAIT FOR REWARD
+             </h2>
+             <p className="text-gray-400 text-sm mb-8">Do not close this screen or you lose the reward!</p>
+             
+             <div className="relative w-40 h-40 flex items-center justify-center mb-8">
+                <div className="absolute inset-0 border-4 border-gray-800 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-kuba-yellow rounded-full animate-spin border-t-transparent" style={{ animationDuration: '2s' }}></div>
+                <span className="text-6xl font-black text-white font-mono">{adCountdown}</span>
+             </div>
+             
+             <div className="bg-gray-900 px-6 py-3 rounded-xl border border-gray-800">
+                <p className="text-kuba-yellow font-bold animate-pulse">Verifying Ad View...</p>
+             </div>
+         </div>
+       )}
+
+       {/* Header/Mission Bar */}
+       <div className="bg-gray-900 border-b border-gray-800 p-2 flex items-center justify-between text-xs px-4 shadow-md z-10 sticky top-0">
           <div className="flex items-center gap-2">
-             <span className="text-gray-400">Daily Mission:</span>
+             <button onClick={handleShare} className="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold hover:bg-blue-500 transition-colors">
+               INVITE +
+             </button>
              <div className="flex items-center gap-1">
                 {[...Array(DAILY_AD_TARGET)].map((_, i) => (
-                   <div key={i} className={`w-3 h-3 rounded-full ${i < state.adsWatchedToday ? 'bg-green-500' : 'bg-gray-700'}`}></div>
+                   <div key={i} className={`w-2 h-2 rounded-full ${i < state.adsWatchedToday ? 'bg-green-500' : 'bg-gray-700'}`}></div>
                 ))}
              </div>
           </div>
           {canClaimMission ? (
-             <button onClick={handleClaimMission} className="bg-yellow-500 text-black font-bold px-2 py-1 rounded animate-pulse">
+             <button onClick={handleClaimMission} className="bg-yellow-500 text-black font-bold px-2 py-1 rounded animate-pulse text-[10px]">
                 CLAIM {DAILY_MISSION_REWARD}
              </button>
           ) : (
-             <span className="text-gray-500">{state.adsWatchedToday}/{DAILY_AD_TARGET} Watched</span>
+             <span className="text-gray-500 text-[10px]">{state.adsWatchedToday}/{DAILY_AD_TARGET} Daily Ads</span>
           )}
        </div>
 
-       {/* Chat Area */}
-       <div className="flex-grow overflow-y-auto p-4 space-y-4 pb-20 scroll-smooth" ref={chatContainerRef}>
+       {/* Chat Area - Adjusted PB for 2-row footer */}
+       <div className="flex-grow overflow-y-auto p-4 space-y-4 pb-40 scroll-smooth" ref={chatContainerRef}>
           {messages.map((msg) => (
              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role === 'model' && (
+                   <div className="w-8 h-8 rounded-full bg-kuba-yellow border border-black flex items-center justify-center mr-2 flex-shrink-0 self-end mb-1">
+                      <span className="text-xs">🤖</span>
+                   </div>
+                )}
                 <div 
-                  className={`max-w-[85%] rounded-2xl p-3 relative ${
+                  className={`max-w-[85%] rounded-2xl p-3 relative shadow-sm ${
                      msg.role === 'user' 
                      ? 'bg-blue-600 text-white rounded-tr-none' 
                      : 'bg-gray-800 text-gray-200 rounded-tl-none border border-gray-700'
                   }`}
                 >
-                   {/* Attachment */}
                    {msg.attachment && msg.attachment.type === 'image' && (
-                      <img src={msg.attachment.url} alt="User Upload" className="rounded-lg mb-2 max-h-48 border border-white/20" />
+                      <img src={msg.attachment.url} alt="User Upload" className="rounded-lg mb-2 max-h-48 border border-white/20 w-full object-cover" />
                    )}
                    
-                   {/* Text */}
                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
                    
-                   {/* Sources */}
                    {msg.sources && msg.sources.length > 0 && (
                       <div className="mt-2 pt-2 border-t border-gray-600/50">
-                         <p className="text-[10px] text-gray-500 mb-1">Sources:</p>
                          <div className="flex flex-wrap gap-1">
                             {msg.sources.map((s, idx) => (
-                               <a key={idx} href={s.uri} target="_blank" rel="noreferrer" className="text-[10px] bg-black/30 px-2 py-1 rounded hover:bg-black/50 text-blue-300 truncate max-w-full block">
-                                  {s.title}
+                               <a key={idx} href={s.uri} target="_blank" rel="noreferrer" className="text-[9px] bg-black/40 px-2 py-1 rounded text-blue-300 truncate max-w-full block hover:underline">
+                                  🔗 {s.title}
                                </a>
                             ))}
                          </div>
@@ -368,82 +413,86 @@ const Chat: React.FC = () => {
           
           {isLoading && (
              <div className="flex justify-start">
+                <div className="w-8 h-8 mr-2"></div>
                 <div className="bg-gray-800 rounded-2xl p-3 rounded-tl-none border border-gray-700">
                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                    </div>
                 </div>
              </div>
           )}
           
-          {/* Invisible ref for scrolling */}
           <div ref={messagesEndRef} />
        </div>
 
-       {/* Input Area */}
-       <div className="fixed bottom-16 left-0 w-full bg-gray-900 border-t border-gray-800 p-2 z-20">
+       {/* Input Area - 2 LAYERS (Rows) */}
+       <div className="fixed bottom-16 left-0 w-full bg-gray-900 border-t border-gray-800 px-3 py-2 z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
           {/* Quota Warning / Ad Trigger */}
           {state.dailyQuota <= 0 ? (
-             <div className="p-2">
-                {adCountdown !== null && adCountdown > 0 ? (
-                   <button disabled className="w-full bg-gray-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 cursor-wait">
-                      <span>⏳</span> Checking Ad Status ({adCountdown}s)
-                   </button>
-                ) : adCountdown === 0 ? (
-                   <button onClick={completeAdReward} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 animate-bounce">
-                      <span>✅</span> CLAIM QUOTA REWARD
+             <div className="p-1">
+                {adCountdown === 0 ? (
+                   <button onClick={completeAdReward} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 animate-bounce shadow-lg">
+                      <span>✅</span> CLAIM REWARD
                    </button>
                 ) : (
-                   <button onClick={() => handleWatchAd(false)} className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-900/50">
-                      <span>📺</span> WATCH AD TO REFILL QUOTA
+                   <button onClick={() => handleWatchAd(false)} className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-900/30">
+                      <span>📺</span> WATCH AD TO CHAT
                    </button>
                 )}
              </div>
           ) : (
-             <div className="flex items-center gap-2">
-                <button 
-                   onClick={() => setShowVoiceModal(true)}
-                   className="p-3 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700"
-                >
-                   🔊
-                </button>
-                <input 
-                   type="file" 
-                   accept="image/*" 
-                   className="hidden" 
-                   ref={fileInputRef} 
-                   onChange={handleImageSelect}
-                />
-                <button 
-                   onClick={() => fileInputRef.current?.click()}
-                   className="p-3 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700"
-                >
-                   📷
-                </button>
-                <input 
-                   type="text" 
-                   value={inputText}
-                   onChange={(e) => setInputText(e.target.value)}
-                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                   placeholder={`Ask KUBA (${state.dailyQuota} left)...`}
-                   className="flex-grow bg-black border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-kuba-yellow transition-colors placeholder-gray-600"
-                />
-                <button 
-                   onClick={handleSendMessage}
-                   disabled={!inputText.trim() || isLoading}
-                   className="p-3 rounded-xl bg-kuba-yellow text-black font-bold hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                   🚀
-                </button>
+             <div className="flex flex-col gap-2">
+                {/* Layer 1: Input + Send Button */}
+                <div className="flex gap-2 w-full">
+                    <input 
+                       type="text" 
+                       value={inputText}
+                       onChange={(e) => setInputText(e.target.value)}
+                       onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                       placeholder={`Ask KUBA...`}
+                       className="flex-grow bg-black border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-kuba-yellow transition-colors placeholder-gray-600 text-sm"
+                    />
+                    <button 
+                       onClick={handleSendMessage}
+                       disabled={!inputText.trim() || isLoading}
+                       className="w-12 h-12 flex-shrink-0 rounded-xl bg-kuba-yellow text-black font-bold hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg flex items-center justify-center"
+                    >
+                       🚀
+                    </button>
+                </div>
+                
+                {/* Layer 2: Action Buttons */}
+                <div className="flex justify-between items-center px-1">
+                    <div className="flex gap-3">
+                        <button 
+                           onClick={() => setShowVoiceModal(true)}
+                           className="w-10 h-10 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 flex items-center justify-center border border-gray-700"
+                        >
+                           🔊
+                        </button>
+                        <input 
+                           type="file" 
+                           accept="image/*" 
+                           className="hidden" 
+                           ref={fileInputRef} 
+                           onChange={handleImageSelect}
+                        />
+                        <button 
+                           onClick={() => fileInputRef.current?.click()}
+                           className="w-10 h-10 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 flex items-center justify-center border border-gray-700"
+                        >
+                           📷
+                        </button>
+                    </div>
+                    
+                    <span className="text-[10px] text-gray-500 font-mono bg-black/30 px-2 py-1 rounded">
+                        Quota: <span className={state.dailyQuota < 3 ? 'text-red-500' : 'text-green-500'}>{state.dailyQuota}</span>
+                    </span>
+                </div>
              </div>
           )}
-          <div className="text-center mt-1">
-             <span className="text-[10px] text-gray-600">
-                Quota: {state.dailyQuota} • Balance: {state.balance.toLocaleString()}
-             </span>
-          </div>
        </div>
     </div>
   );
