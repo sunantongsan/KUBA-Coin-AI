@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
@@ -113,6 +112,18 @@ const Chat: React.FC = () => {
     });
   };
 
+  // Helper to get a random reward message
+  const getRewardMessage = () => {
+    const msgs = [
+      "\n\n(อ่ะ... เอาไป 200 KUBA ค่าทำขวัญ 🪙)",
+      "\n\n(ด่าเสร็จก็แจก... รับไป 200 KUBA ไป๊!)",
+      "\n\n(ปลอบขวัญให้ 200 KUBA เด้อ... อย่าร้องไห้ขี้มูกโป่ง)",
+      "\n\n(รับไป 200 KUBA... เอาไปรักษาแผลใจซะ)",
+      "\n\n(เอาไป 200 KUBA... แล้วไสหัวไปนอนได้แล้ว)"
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  };
+
   const handleSendMedia = async (file: File) => {
     if (state.dailyQuota <= 0) {
       handleWatchAd(false); // Prompt user
@@ -141,11 +152,14 @@ const Chat: React.FC = () => {
     try {
         // Send Image to Gemini
         const { text: responseText, sources } = await generateTrollResponse({ data: base64Data, mimeType }, state.language);
+        
+        // Append reward text
+        const finalText = responseText + getRewardMessage();
 
         const aiMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'model',
-          text: responseText,
+          text: finalText,
           timestamp: Date.now(),
           sources: sources
         };
@@ -201,10 +215,13 @@ const Chat: React.FC = () => {
     try {
       const { text: responseText, sources } = await generateTrollResponse(userMsg.text, state.language);
       
+      // Append reward text
+      const finalText = responseText + getRewardMessage();
+
       const aiMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'model',
-        text: responseText,
+        text: finalText,
         timestamp: Date.now(),
         sources: sources
       };
@@ -221,10 +238,14 @@ const Chat: React.FC = () => {
       console.warn("Gemini unavailable, falling back to Local AI");
       try {
         const fallbackText = await generateLocalResponse(userMsg.text, state.language);
+        
+        // Append reward text to fallback as well
+        const finalText = fallbackText + "\n(My poet brain is offline 🐹)" + getRewardMessage();
+
         const aiMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'model',
-          text: fallbackText + "\n(My poet brain is offline 🐹)",
+          text: finalText,
           timestamp: Date.now()
         };
         setMessages(prev => [...prev, aiMsg]);

@@ -42,17 +42,22 @@ const Home: React.FC = () => {
           className={`relative w-40 h-40 rounded-full border-4 border-kuba-black shadow-2xl transform transition hover:scale-105 ${animClass}`}
         />
         <div className="absolute bottom-0 right-0 bg-white text-black text-xs font-bold px-2 py-1 rounded-full border border-black transform rotate-12">
-          SUPER TROLL
+          ปากแจ๋ว แจกจริง
         </div>
       </div>
 
-      <div className="text-center space-y-1">
-        <h2 className="text-2xl font-black text-kuba-yellow uppercase italic tracking-widest">
-          KUBA COIN
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-black text-kuba-yellow uppercase italic tracking-widest leading-none">
+          อยากรวยก็เข้ามา!<br/>
+          <span className="text-white text-sm not-italic font-sans">ไอ้มุษย์หน้าโง่ 🤪</span>
         </h2>
-        <p className="text-gray-400 text-xs max-w-[250px] mx-auto">
-          The only coin that trolls you back.
-        </p>
+        
+        <div className="bg-gray-800/50 p-3 rounded-xl border border-dashed border-gray-600 max-w-[280px] mx-auto mt-2">
+          <p className="text-gray-300 text-xs font-bold text-center">
+             "มาให้ด่าซะดีๆ... แชทปุ๊บ รับเหรียญปั๊บ"<br/>
+             <span className="text-kuba-yellow block mt-1">(ด่าเจ็บ จ่ายจริง 200 KUBA/คำ)</span>
+          </p>
+        </div>
         
         {/* Language Selector */}
         <div className="flex gap-2 justify-center pt-2">
@@ -75,20 +80,20 @@ const Home: React.FC = () => {
       {/* How to Earn Section */}
       <div className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 shadow-lg">
         <h3 className="text-kuba-yellow text-sm font-black uppercase mb-3 text-center tracking-wider">
-          💰 How to Earn KUBA
+          💰 หา KUBA ได้ที่ไหน? (อ่านซะ!)
         </h3>
         <ul className="space-y-2 text-xs text-gray-300">
           <li className="flex items-center gap-2">
             <span className="bg-gray-800 p-1 rounded">💬</span> 
-            <span>Chat with AI: <b className="text-green-400">+200 Coins/msg</b></span>
+            <span>คุยกับข้า (Chat): <b className="text-green-400">รับ 200 KUBA/ข้อความ</b></span>
           </li>
           <li className="flex items-center gap-2">
             <span className="bg-gray-800 p-1 rounded">📺</span> 
-            <span>Watch Ads: <b className="text-green-400">Unlock Chat Quota</b></span>
+            <span>ดูโฆษณา (Ads): <b className="text-green-400">ปลดล็อคโควต้าแชท</b></span>
           </li>
           <li className="flex items-center gap-2">
             <span className="bg-gray-800 p-1 rounded">🎁</span> 
-            <span>Complete Offers: <b className="text-green-400">+5000+ Coins</b></span>
+            <span>ทำภารกิจ (Offers): <b className="text-green-400">รับ 5,000+ KUBA</b></span>
           </li>
         </ul>
       </div>
@@ -99,21 +104,21 @@ const Home: React.FC = () => {
           onClick={() => navigate('/chat')}
           className="w-full bg-kuba-yellow text-black font-black py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all uppercase text-lg"
         >
-          Start Trolling AI 💬
+          เริ่มแชท (โดนด่าฟรี มีตังค์ให้) 💬
         </button>
 
         <button 
           onClick={handleEarnClick}
           className="w-full bg-gray-800 text-white border-2 border-gray-600 font-bold py-3 rounded-xl hover:bg-gray-700 transition-all flex items-center justify-center gap-2"
         >
-          <span>📺</span> Earn from Ads
+          <span>📺</span> ดูโฆษณา (แก้เซ็ง)
         </button>
 
         <button 
           onClick={() => navigate('/wallet')}
           className="w-full bg-kuba-black text-kuba-yellow border-2 border-kuba-yellow font-bold py-3 rounded-xl hover:bg-gray-900 transition-all flex items-center justify-center gap-2"
         >
-          <span>💼</span> My Wallet
+          <span>💼</span> กระเป๋าตังค์ (เช็คยอด)
         </button>
       </div>
     </div>
