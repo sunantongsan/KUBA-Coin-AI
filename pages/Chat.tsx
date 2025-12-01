@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
@@ -6,8 +7,20 @@ import { playSoundEffect } from '../services/audioEffects';
 import { ChatMessage } from '../types';
 import { MONETAG_DIRECT_LINK, INTERACTION_REWARD, TELEGRAM_BOT_USERNAME, AD_REWARD_QUOTA } from '../constants';
 
+const DAILY_AD_TARGET = 5;
+const DAILY_MISSION_REWARD = 1000;
+
 const Chat: React.FC = () => {
-  const { state, decrementQuota, addQuota, incrementBalance, setSoundMode } = useAppContext();
+  const { 
+    state, 
+    decrementQuota, 
+    addQuota, 
+    incrementBalance, 
+    setSoundMode, 
+    incrementAdsWatched, 
+    claimDailyReward 
+  } = useAppContext();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +76,7 @@ const Chat: React.FC = () => {
         setIsLoading(true);
         setTimeout(() => {
           addQuota();
+          incrementAdsWatched(); // Update mission progress
           setIsLoading(false);
           playSoundEffect('game');
           setMessages(prev => [...prev, {
@@ -283,14 +297,24 @@ const Chat: React.FC = () => {
     }
 
     // 3. Open Direct Link (Primary monetization method)
-    // Use Telegram's openLink for better compatibility (requires v6.4+), fallback to window.open
     setTimeout(() => {
       if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
         window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
       } else {
         window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
       }
-    }, 300); // Small delay to let SDK try first
+    }, 300); 
+  };
+
+  const handleClaimDaily = () => {
+    claimDailyReward(DAILY_MISSION_REWARD);
+    playSoundEffect('game');
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      role: 'model',
+      text: `🎉 สุดยอด! ว่างจัดจริงๆ ดูโฆษณาครบ ${DAILY_AD_TARGET} รอบ\nรับไปเลย ${DAILY_MISSION_REWARD} KUBA!\n(You have no life, but you have coins!)`,
+      timestamp: Date.now()
+    }]);
   };
 
   const handleShare = () => {
@@ -298,7 +322,6 @@ const Chat: React.FC = () => {
     const shareText = "This KUBA AI is roasting me in poems! 🤣 Come earn coins.";
     const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`;
 
-    // openTelegramLink requires v6.4+
     if (window.Telegram?.WebApp?.openTelegramLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
         window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
     } else {
@@ -344,6 +367,10 @@ const Chat: React.FC = () => {
 
   const getRotation = (id: string) => parseInt(id.slice(-2)) % 2 === 0 ? 'rotate-1' : '-rotate-1';
 
+  // Progress Bar Calculation
+  const progressPercent = Math.min((state.adsWatchedToday / DAILY_AD_TARGET) * 100, 100);
+  const isMissionComplete = state.adsWatchedToday >= DAILY_AD_TARGET;
+
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
       {/* Studio Settings Modal (SFX Only) */}
@@ -359,8 +386,6 @@ const Chat: React.FC = () => {
             <h3 className="text-xl font-black text-kuba-yellow uppercase text-center mb-4 tracking-wider border-b border-gray-700 pb-2">
               ⚙️ Studio FX
             </h3>
-            
-            {/* Sound Effect Selection */}
             <div>
               <h4 className="text-white font-bold mb-2 text-sm uppercase">Sound Effects</h4>
               <div className="space-y-2">
@@ -387,46 +412,80 @@ const Chat: React.FC = () => {
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* Top Bar with Sound Toggle */}
-      <div className="flex justify-between items-center mb-4 gap-2">
-        <div className="bg-gray-800 rounded-lg p-2 flex-grow flex justify-between items-center text-sm shadow-inner border border-gray-700">
-          <span className="text-gray-400 font-mono">QUOTA: <span className="text-kuba-yellow font-bold text-lg">{state.dailyQuota}</span>/5</span>
-        </div>
+      {/* Top Bar with Sound Toggle & Daily Mission */}
+      <div className="flex flex-col gap-2 mb-2">
         
-        {/* Sound Settings Toggle */}
-        <div className="flex bg-gray-700 rounded-lg p-1 gap-1">
-          <button 
-            onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
-            className={`p-2 rounded-md text-xs font-bold transition-all ${
-              isSoundEnabled 
-                ? 'bg-kuba-yellow text-black shadow-sm' 
-                : 'text-gray-400'
-            }`}
-          >
-            {isSoundEnabled ? '🔊' : '🔇'}
-          </button>
+        {/* Row 1: Status & Actions */}
+        <div className="flex justify-between items-center gap-2">
+          <div className="bg-gray-800 rounded-lg p-2 flex-grow flex justify-between items-center text-sm shadow-inner border border-gray-700">
+            <span className="text-gray-400 font-mono text-xs">QUOTA: <span className="text-kuba-yellow font-bold text-base">{state.dailyQuota}</span>/5</span>
+          </div>
           
-           <button 
-              onClick={() => setShowVoiceModal(true)}
-              className="p-2 rounded-md bg-gray-600 text-white text-xs hover:bg-gray-500 active:scale-90 flex items-center gap-1"
-              title="Studio Settings"
-           >
-              <span>⚙️</span>
-           </button>
+          <div className="flex bg-gray-700 rounded-lg p-1 gap-1">
+            <button 
+              onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
+              className={`p-2 rounded-md text-xs font-bold transition-all ${
+                isSoundEnabled ? 'bg-kuba-yellow text-black shadow-sm' : 'text-gray-400'
+              }`}
+            >
+              {isSoundEnabled ? '🔊' : '🔇'}
+            </button>
+             <button 
+                onClick={() => setShowVoiceModal(true)}
+                className="p-2 rounded-md bg-gray-600 text-white text-xs hover:bg-gray-500 active:scale-90 flex items-center gap-1"
+             >
+                <span>⚙️</span>
+             </button>
+          </div>
+          <button onClick={handleSnapshot} className="bg-gray-700 text-gray-300 p-2 rounded-lg text-xs">📸</button>
+          <button 
+            onClick={handleShare}
+            className="bg-blue-600 text-white p-2 rounded-lg font-bold text-xs shadow-md border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
+          >
+            🚀
+          </button>
         </div>
 
-        <button onClick={handleSnapshot} className="bg-gray-700 text-gray-300 p-2 rounded-lg text-xs" title="Snapshot">📸</button>
-        <button 
-          onClick={handleShare}
-          className="bg-blue-600 text-white p-2 rounded-lg font-bold text-xs shadow-md border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
-        >
-          🚀
-        </button>
+        {/* Row 2: Daily Mission Progress */}
+        <div className="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 flex items-center gap-2">
+          <div className="text-[10px] text-gray-400 font-bold w-12 text-center leading-none">
+            DAILY<br/>MISSION
+          </div>
+          <div className="flex-grow flex flex-col justify-center">
+            <div className="flex justify-between text-[10px] text-gray-300 mb-1">
+               <span>Watch {DAILY_AD_TARGET} Ads</span>
+               <span>{state.adsWatchedToday}/{DAILY_AD_TARGET}</span>
+            </div>
+            <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+               <div 
+                 className="bg-gradient-to-r from-green-500 to-kuba-yellow h-full transition-all duration-500"
+                 style={{ width: `${progressPercent}%` }}
+               />
+            </div>
+          </div>
+          
+          {isMissionComplete && !state.dailyRewardClaimed ? (
+             <button 
+               onClick={handleClaimDaily}
+               className="bg-kuba-yellow text-black text-[10px] font-black px-2 py-1 rounded animate-bounce border-2 border-black shadow-sm"
+             >
+               CLAIM<br/>1000K
+             </button>
+          ) : (
+             <button 
+               onClick={() => handleWatchAd(true)}
+               disabled={isMissionComplete}
+               className={`text-[10px] font-bold px-2 py-1 rounded border border-gray-600 ${isMissionComplete ? 'bg-gray-700 text-green-500' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+             >
+               {state.dailyRewardClaimed ? 'DONE ✅' : 'GO 📺'}
+             </button>
+          )}
+        </div>
+
       </div>
 
       {/* Messages */}

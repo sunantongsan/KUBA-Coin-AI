@@ -16,6 +16,8 @@ interface AppContextType {
   addQuota: () => void;
   setLanguage: (lang: string) => void;
   setSoundMode: (mode: 'off' | 'comedy' | 'cartoon' | 'game' | 'laughter') => void;
+  incrementAdsWatched: () => void;
+  claimDailyReward: (amount: number) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -53,16 +55,25 @@ const App: React.FC = () => {
       lastResetDate: today,
       hasSeenAdToday: false,
       language: tgUser?.language_code || navigator.language || 'en-US',
-      soundMode: 'comedy' // Default Sound Mode (90s Style)
+      soundMode: 'comedy', // Default Sound Mode (90s Style)
+      adsWatchedToday: 0,
+      dailyRewardClaimed: false
     };
 
     if (saved) {
       const parsed = JSON.parse(saved);
-      const mergedState = { ...parsed, telegramUserId: userId, telegramUsername: defaultState.telegramUsername };
-      if (!mergedState.soundMode) mergedState.soundMode = 'comedy';
+      const mergedState = { ...defaultState, ...parsed, telegramUserId: userId, telegramUsername: defaultState.telegramUsername };
       
+      // Reset if new day
       if (parsed.lastResetDate !== today) {
-        return { ...mergedState, dailyQuota: INITIAL_QUOTA, lastResetDate: today, hasSeenAdToday: false };
+        return { 
+          ...mergedState, 
+          dailyQuota: INITIAL_QUOTA, 
+          lastResetDate: today, 
+          hasSeenAdToday: false,
+          adsWatchedToday: 0,
+          dailyRewardClaimed: false
+        };
       }
       return mergedState;
     }
@@ -126,8 +137,29 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, soundMode: mode }));
   };
 
+  const incrementAdsWatched = () => {
+    setState(prev => ({ ...prev, adsWatchedToday: prev.adsWatchedToday + 1 }));
+  };
+
+  const claimDailyReward = (amount: number) => {
+    setState(prev => ({ 
+      ...prev, 
+      balance: prev.balance + amount,
+      dailyRewardClaimed: true 
+    }));
+  };
+
   return (
-    <AppContext.Provider value={{ state, incrementBalance, decrementQuota, addQuota, setLanguage, setSoundMode }}>
+    <AppContext.Provider value={{ 
+      state, 
+      incrementBalance, 
+      decrementQuota, 
+      addQuota, 
+      setLanguage, 
+      setSoundMode,
+      incrementAdsWatched,
+      claimDailyReward
+    }}>
       <HashRouter>
         <StartupRedirect />
         <Layout>

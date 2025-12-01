@@ -26,6 +26,10 @@ export interface AppState {
   language: string;
   // Removed selectedVoice
   soundMode: 'off' | 'comedy' | 'cartoon' | 'game' | 'laughter';
+
+  // Daily Mission Data
+  adsWatchedToday: number;
+  dailyRewardClaimed: boolean;
 }
 
 export interface AdConfig {
