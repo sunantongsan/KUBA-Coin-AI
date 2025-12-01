@@ -30,8 +30,14 @@ const Home: React.FC = () => {
     return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ref_${myId}`;
   };
 
+  // UPDATED: Funny, Viral, Non-Scammy Copywriting
   const getShareText = () => {
-    return `🔥 JOIN THE GANG! \n\n🤖 KUBA AI: The Gangster Bot that pays you to get roasted.\n\n💰 GET ${WELCOME_BONUS.toLocaleString()} COINS FREE (Limited Time!)\n\n👇 CLICK HERE OR STAY BROKE:`;
+    const texts = [
+      `⚠️ WARNING: TOXIC AI DETECTED ⚠️\n\nI just got roasted by this Gangster Bot. 🤣\nIt pays you to fight with it.\n\nCome help me diss it back! 👇`,
+      `💬 Need a friend? Too bad.\nKUBA AI is here to ruin your day and give you coins.\n\nTry not to cry. 🥲\n\n👇 CHALLENGE ACCEPTED:`,
+      `🥊 FIGHT CLUB: HUMAN vs AI\n\nThis bot has zero chill. Enter the arena if you dare.\n(Free 2,000 Coins for new fighters)\n\n👇 JOIN HERE:`
+    ];
+    return texts[Math.floor(Math.random() * texts.length)];
   };
 
   const handleShare = (platform: 'tg' | 'x' | 'fb' | 'copy') => {
@@ -73,58 +79,69 @@ const Home: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center flex-grow space-y-5 animate-fade-in py-6 relative">
       
-      {/* SHARE MODAL */}
+      {/* SHARE MODAL - PREMIUM SOCIAL CARD STYLE */}
       {showShareModal && (
-        <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in">
-          <div className="bg-gradient-to-b from-gray-800 to-black w-full max-w-sm rounded-2xl border-2 border-kuba-yellow shadow-[0_0_30px_rgba(255,215,0,0.3)] p-5 relative animate-bounce-slow">
+        <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-fade-in">
+          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black w-full max-w-sm rounded-3xl border border-gray-700 shadow-[0_0_50px_rgba(255,215,0,0.2)] p-6 relative animate-bounce-slow overflow-hidden">
             
+            {/* Background Decoration */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-kuba-yellow rounded-full filter blur-[80px] opacity-20"></div>
+
             <button 
               onClick={() => setShowShareModal(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-white bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center font-bold"
+              className="absolute top-4 right-4 text-gray-400 hover:text-white bg-black/50 hover:bg-black rounded-full w-8 h-8 flex items-center justify-center font-bold transition-colors z-20"
             >
               ✕
             </button>
 
-            <h3 className="text-2xl font-black text-center text-white italic tracking-tighter uppercase mb-4">
-              📢 RECRUIT THE GANG
+            <h3 className="text-2xl font-black text-center text-white italic tracking-tighter uppercase mb-6 relative z-10">
+              📢 SPREAD THE CHAOS
             </h3>
 
-            {/* Visual Preview Card */}
-            <div className="bg-gray-900 rounded-xl p-3 border border-gray-700 mb-6">
-               <div className="flex items-center gap-3 mb-2">
-                 <img src={KUBA_LOGO_URL} className="w-10 h-10 rounded-full border border-white" />
-                 <div>
-                   <p className="text-kuba-yellow font-bold text-xs">KUBA AI</p>
-                   <p className="text-gray-400 text-[10px]">@kubaminer_bot</p>
-                 </div>
+            {/* VISUAL PREVIEW CARD (Simulates a Social Media Link Preview) */}
+            <div className="bg-black rounded-xl border border-gray-700 overflow-hidden mb-6 relative group transform hover:scale-[1.02] transition-transform">
+               {/* "Image" Area */}
+               <div className="h-32 bg-gray-800 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-blue-900 opacity-50"></div>
+                  <img src={KUBA_LOGO_URL} className="w-20 h-20 rounded-full border-4 border-white shadow-lg relative z-10" />
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-kuba-yellow text-[10px] font-bold px-2 py-1 rounded">
+                     AI CHATBOT
+                  </div>
                </div>
-               <div className="bg-gray-800 rounded p-2 text-xs text-gray-300 font-mono mb-2">
-                 "Stop being poor! Get {WELCOME_BONUS.toLocaleString()} coins FREE. Click link 👇"
-               </div>
-               <div className="text-blue-400 text-[10px] underline truncate">
-                 {getRefLink()}
+               
+               {/* Text Area */}
+               <div className="p-3 bg-gray-900">
+                 <h4 className="text-white font-bold text-sm truncate">KUBA: The Gangster AI 🤖</h4>
+                 <p className="text-gray-400 text-xs mt-1 line-clamp-2">
+                   ⚠️ Warning: Toxic Bot. Get roasted and earn crypto. Join the fight now!
+                 </p>
+                 <p className="text-blue-400 text-[10px] mt-2 truncate opacity-70">
+                   t.me/{TELEGRAM_BOT_USERNAME}
+                 </p>
                </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => handleShare('tg')} className="bg-[#229ED9] hover:bg-[#1e88bc] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95">
+            <div className="grid grid-cols-2 gap-3 relative z-10">
+              <button onClick={() => handleShare('tg')} className="bg-[#229ED9] hover:bg-[#1e88bc] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-blue-900/20">
                 <span>✈️</span> Telegram
               </button>
-              <button onClick={() => handleShare('x')} className="bg-black border border-gray-600 hover:bg-gray-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95">
+              <button onClick={() => handleShare('x')} className="bg-black border border-gray-600 hover:bg-gray-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg">
                 <span>✖️</span> Twitter / X
               </button>
-              <button onClick={() => handleShare('fb')} className="bg-[#1877F2] hover:bg-[#1565c0] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95">
+              <button onClick={() => handleShare('fb')} className="bg-[#1877F2] hover:bg-[#1565c0] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-blue-800/20">
                 <span>📘</span> Facebook
               </button>
-              <button onClick={() => handleShare('copy')} className={`py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 border ${copySuccess ? 'bg-green-600 border-green-600 text-white' : 'bg-gray-700 border-gray-600 text-gray-300'}`}>
+              <button onClick={() => handleShare('copy')} className={`py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 border ${copySuccess ? 'bg-green-600 border-green-600 text-white' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
                 <span>{copySuccess ? '✅' : '📋'}</span> {copySuccess ? 'Copied!' : 'Copy Link'}
               </button>
             </div>
 
-            <div className="mt-4 text-center">
-              <p className="text-[10px] text-gray-500">
-                Reward: You get <span className="text-kuba-yellow">{REFERRAL_REWARD.toLocaleString()}</span> | Friend gets <span className="text-green-400">{WELCOME_BONUS.toLocaleString()}</span>
-              </p>
+            <div className="mt-6 text-center">
+              <div className="inline-block bg-gray-800/80 px-4 py-2 rounded-full border border-gray-700">
+                <p className="text-[10px] text-gray-400">
+                  🎁 Referral Bonus: <span className="text-kuba-yellow font-bold">+{REFERRAL_REWARD.toLocaleString()} KUBA</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -181,11 +198,14 @@ const Home: React.FC = () => {
         {/* Invite Button (Smaller but Prominent) */}
         <button 
           onClick={() => setShowShareModal(true)}
-          className="col-span-2 bg-pink-600 text-white font-black py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all uppercase text-sm flex flex-col items-center justify-center leading-none border-2 border-white relative overflow-hidden"
+          className="col-span-2 bg-pink-600 text-white font-black py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all uppercase text-sm flex flex-col items-center justify-center leading-none border-2 border-white relative overflow-hidden group"
         >
-          <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-          <span className="relative z-10">👥 INVITE</span>
-          <span className="relative z-10 text-[10px] font-normal mt-1 text-yellow-300">+{REFERRAL_REWARD.toLocaleString()}</span>
+          <div className="absolute inset-0 bg-white/10 animate-pulse group-hover:bg-white/20 transition-colors"></div>
+          <span className="relative z-10 text-2xl mb-1">📢</span>
+          <span className="relative z-10 tracking-widest">INVITE</span>
+          <span className="relative z-10 text-[9px] font-normal text-yellow-300 bg-black/30 px-2 rounded-full mt-1">
+            +{REFERRAL_REWARD.toLocaleString()}
+          </span>
         </button>
       </div>
 
