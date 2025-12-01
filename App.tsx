@@ -46,12 +46,17 @@ const App: React.FC = () => {
     const storageKey = userId ? `kuba_data_v1_${userId}` : 'kuba_data_v1_guest';
 
     // Normalize Language Detection
+    // Telegram usually returns 2-char codes (e.g. 'th', 'en', 'ru')
     const rawLang = tgUser?.language_code || navigator.language || 'en';
-    let detectedLang = 'en-US';
-    if (rawLang.toLowerCase().includes('th')) detectedLang = 'th-TH';
-    else if (rawLang.toLowerCase().includes('zh')) detectedLang = 'zh-CN';
-    else if (rawLang.toLowerCase().includes('es')) detectedLang = 'es-ES';
-    else if (rawLang.toLowerCase().includes('ja')) detectedLang = 'ja-JP';
+    let detectedLang = 'en-US'; // Default
+
+    const lowerLang = rawLang.toLowerCase();
+    if (lowerLang.includes('th')) detectedLang = 'th-TH';
+    else if (lowerLang.includes('zh')) detectedLang = 'zh-CN';
+    else if (lowerLang.includes('es')) detectedLang = 'es-ES';
+    else if (lowerLang.includes('ja')) detectedLang = 'ja-JP';
+
+    console.log(`[App] Detected Language: ${rawLang} -> ${detectedLang}`);
 
     // 2. Load Local Data
     const saved = localStorage.getItem(storageKey);

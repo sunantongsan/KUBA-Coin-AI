@@ -31,31 +31,37 @@ const Home: React.FC = () => {
     return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ref_${myId}`;
   };
 
-  // UPDATED: Gangster Airdrop Marketing Copy (Viral & Funny)
+  // UPDATED: Replaced Bot Name/@Mention with explicit full URL as requested
   const getShareText = () => {
+    // We append the referral parameter dynamically in handleShare, 
+    // but here we set the base text structure to feature the link prominently.
     const texts = [
-      `🔥 KUBA AIRDROP IS LIVE! But this AI is guarding it and it's TOXIC AF. 🤬\n\nCome help me fight it and steal the coins! 💰\n(Free ${WELCOME_BONUS.toLocaleString()} KUBA for new fighters)\n\n👇 JOIN THE GANG:`,
+      `🔥 KUBA AIRDROP IS LIVE! This AI is TOXIC AF. 🤬\n\nCome help me fight it and steal the coins! 💰\n(Free ${WELCOME_BONUS.toLocaleString()} KUBA for new fighters)\n\n👇 JOIN HERE:\nhttps://t.me/kubaminer_bot`,
       
-      `🤖 Man vs Machine: I just got roasted by KUBA AI. 💀\n\nJoin the chaos, beat the bot, and get FREE CRYPTO instantly! 🚀\n\n👇 CLAIM YOUR ${WELCOME_BONUS.toLocaleString()} KUBA:`,
+      `🤖 Man vs Machine: I just got roasted by KUBA AI. 💀\n\nJoin the chaos, beat the bot, and get FREE CRYPTO instantly! 🚀\n\n👇 CLAIM REWARD:\nhttps://t.me/kubaminer_bot`,
       
-      `💸 They said "Easy Money", they didn't say the AI would bite. 🐕\n\nCome get your free KUBA coins before I take them all!\nDon't be a chicken. 🐣\n\n👇 ENTER HERE:`,
+      `💸 They said "Easy Money", they didn't say the AI would bite. 🐕\n\nCome get your free KUBA coins before I take them all!\nDon't be a chicken. 🐣\n\n👇 ENTER NOW:\nhttps://t.me/kubaminer_bot`,
       
-      `⚠️ WARNING: This Bot has NO CHILL.\n\nIt pays you to argue with it. 🤣\nGrab your ${WELCOME_BONUS.toLocaleString()} KUBA Welcome Bonus now!\n\n👇 FIGHT CLUB LINK:`
+      `⚠️ WARNING: This Bot has NO CHILL.\n\nIt pays you to argue with it. 🤣\nGrab your ${WELCOME_BONUS.toLocaleString()} KUBA Welcome Bonus now!\n\n👇 FIGHT CLUB:\nhttps://t.me/kubaminer_bot`
     ];
     return texts[Math.floor(Math.random() * texts.length)];
   };
 
-  const handleShare = (platform: 'tg' | 'x' | 'fb' | 'copy') => {
-    const url = getRefLink();
-    const text = getShareText();
+  const handleShare = (platform: 'tg' | 'x' | 'fb' | 'copy' | 'story') => {
+    const url = getRefLink(); // The actual functioning link with ref code
+    const text = getShareText(); // The text with the visible link
+    
+    // For text-based sharing, we want the visible link in the text to match the functional link
+    // So we replace the base URL in the text with the full referral URL for the Copy/X actions
+    const textWithRef = text.replace('https://t.me/kubaminer_bot', url);
+
     const encodedUrl = encodeURIComponent(url);
-    const encodedText = encodeURIComponent(text);
+    const encodedText = encodeURIComponent(textWithRef);
 
     switch (platform) {
       case 'tg':
         // Telegram relies on the OG tags of the URL being shared. 
-        // Note: For t.me links, the image comes from BotFather settings.
-        const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+        const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(text)}`;
         if (window.Telegram?.WebApp?.openTelegramLink) {
            window.Telegram.WebApp.openTelegramLink(tgUrl);
         } else {
@@ -63,18 +69,27 @@ const Home: React.FC = () => {
         }
         break;
       case 'x':
-        // Updated: Only share text and the Bot Link. Twitter will fetch the card from the Bot Link.
-        const xText = encodeURIComponent(`${text}\n\n@KubacoinAirdrop #KUBA #Airdrop #Crypto`);
-        window.open(`https://twitter.com/intent/tweet?text=${xText}&url=${encodedUrl}`, '_blank');
+        // Updated: Removed @KubacoinAirdrop to avoid confusion, kept only hashtags
+        const xText = encodeURIComponent(`${textWithRef}\n\n#KUBA #Airdrop #Crypto`);
+        // We pass url="" because the link is already in the text body
+        window.open(`https://twitter.com/intent/tweet?text=${xText}`, '_blank');
         break;
       case 'fb':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
         break;
       case 'copy':
-        // For copy to clipboard, only the text and the referral link
-        navigator.clipboard.writeText(`${text}\n${url}`);
+        navigator.clipboard.writeText(textWithRef);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
+        break;
+      case 'story':
+        // Share to Telegram Story with the Bald Guy Image
+        const storyUrl = `https://t.me/share/story?url=${encodedUrl}&text=${encodeURIComponent("FIGHT THE AI. EARN CRYPTO. 🥊")}`;
+        if (window.Telegram?.WebApp?.openTelegramLink) {
+            window.Telegram.WebApp.openTelegramLink(storyUrl);
+        } else {
+            window.open(storyUrl, '_blank');
+        }
         break;
     }
   };
@@ -84,6 +99,7 @@ const Home: React.FC = () => {
     { code: 'th-TH', label: '🇹🇭 TH' },
     { code: 'zh-CN', label: '🇨🇳 CN' },
     { code: 'es-ES', label: '🇪🇸 ES' },
+    { code: 'ja-JP', label: '🇯🇵 JP' }, // Added Japanese
   ];
 
   return (
@@ -108,7 +124,7 @@ const Home: React.FC = () => {
               📢 SPREAD THE CHAOS
             </h3>
 
-            {/* VISUAL PREVIEW CARD (Simulates a Social Media Link Preview) */}
+            {/* VISUAL PREVIEW CARD */}
             <div className="bg-black rounded-xl border border-gray-700 overflow-hidden mb-6 relative group transform hover:scale-[1.02] transition-transform">
                {/* "Image" Area */}
                <div className="h-40 bg-gray-800 flex items-center justify-center relative overflow-hidden">
@@ -137,6 +153,9 @@ const Home: React.FC = () => {
               </button>
               <button onClick={() => handleShare('x')} className="bg-black border border-gray-600 hover:bg-gray-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg">
                 <span>✖️</span> Twitter / X
+              </button>
+              <button onClick={() => handleShare('story')} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg col-span-2">
+                <span>📸</span> Share to Story
               </button>
               <button onClick={() => handleShare('fb')} className="bg-[#1877F2] hover:bg-[#1565c0] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-blue-800/20">
                 <span>📘</span> Facebook
