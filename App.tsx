@@ -80,33 +80,45 @@ const App: React.FC = () => {
     return defaultState;
   });
 
-  // Sync with Server (Vercel KV) on Mount
+  // Handle Referrals & Sync
   useEffect(() => {
-    const syncWithServer = async () => {
+    const initApp = async () => {
       if (!state.telegramUserId) return;
 
+      // 1. Check Referral
+      const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+      // Format: ref_12345 or just 12345
+      if (startParam && startParam !== state.telegramUserId.toString()) {
+         const referrerId = startParam.replace('ref_', '');
+         try {
+            const res = await fetch('/api/referral/claim', {
+               method: 'POST',
+               headers: {'Content-Type': 'application/json'},
+               body: JSON.stringify({ userId: state.telegramUserId, referrerId })
+            });
+            const data = await res.json();
+            if (data.success) {
+               alert(`🎉 WELCOME BONUS! \nYou got 2000 KUBA for joining via friend ${referrerId}.`);
+               setState(prev => ({ ...prev, balance: prev.balance + data.bonus }));
+            }
+         } catch (e) {
+            console.error("Referral Claim Failed", e);
+         }
+      }
+
+      // 2. Sync Data
       try {
         const response = await fetch(`/api/user/sync?user_id=${state.telegramUserId}`);
         if (response.ok) {
           const data = await response.json();
-          
-          if (data.isBanned) {
-            alert("🚫 Your account has been banned for suspicious activity.");
-          }
+          if (data.isBanned) alert("🚫 Account Suspended");
 
-          // SERVER AUTHORITATIVE SYNC
-          // We assume Server DB is more accurate than local storage for multi-device support
           setState(prev => {
-             // If local balance is 0 but server has money, trust server.
-             // If local has money but server is 0 (first sync?), trust local, then push to server later.
-             // Best practice: Trust max value or just trust server if > 0
+             // Prefer Server balance if higher (prevents wipe), but trust referral bonus addition
              let newBalance = prev.balance;
-             if (data.balance > prev.balance) {
+             if (data.balance > newBalance) {
                  newBalance = data.balance;
              }
-             
-             // Sync Quota if server tracks it (optional, usually quota is local per day, but better synced)
-             // For now we only strongly sync Balance as it involves real value.
              return { ...prev, balance: newBalance };
           });
         }
@@ -115,7 +127,7 @@ const App: React.FC = () => {
       }
     };
 
-    syncWithServer();
+    initApp();
   }, [state.telegramUserId]);
 
   // Persist State to LocalStorage
@@ -127,8 +139,6 @@ const App: React.FC = () => {
   // Actions
   const incrementBalance = (amount: number) => {
     setState(prev => ({ ...prev, balance: prev.balance + amount }));
-    // Note: We don't push to server on EVERY chat reward to save API calls, 
-    // but critical updates like Ads are handled in Chat.tsx
   };
 
   const decrementQuota = () => {
@@ -159,7 +169,6 @@ const App: React.FC = () => {
         dailyRewardClaimed: true 
       };
       
-      // Sync to Server on Big Reward
       if (prev.telegramUserId) {
         fetch('/api/user/update', {
             method: 'POST',

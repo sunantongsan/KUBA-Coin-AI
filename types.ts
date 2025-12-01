@@ -50,6 +50,7 @@ declare global {
         openTelegramLink: (url: string) => void;
         openLink: (url: string, options?: { try_instant_view?: boolean }) => void;
         initDataUnsafe: {
+          query_id?: string;
           user?: {
             id: number;
             first_name: string;
@@ -57,6 +58,9 @@ declare global {
             username?: string;
             language_code?: string;
           };
+          auth_date?: string;
+          hash?: string;
+          start_param?: string;
         };
       };
     }

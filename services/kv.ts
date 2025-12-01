@@ -1,12 +1,15 @@
 
 import { kv } from '@vercel/kv';
+import { INITIAL_QUOTA, WELCOME_BONUS, REFERRAL_REWARD } from '../constants';
 
 // Define User Data Structure for DB
 export interface UserData {
   balance: number;
-  quota?: number; // Added quota sync
+  quota?: number; 
   isBanned: boolean;
   transactions: string[]; // Store transaction IDs to prevent duplicates
+  referredBy?: string; // ID of the person who invited this user
+  referrals?: string[]; // List of IDs this user has invited
   lastUpdated: number;
 }
 
@@ -71,6 +74,63 @@ export const saveUserState = async (userId: string, data: Partial<UserData>): Pr
   } catch (error) {
     console.error("KV Save Error:", error);
     return false;
+  }
+};
+
+// Process Referral Logic
+export const processReferral = async (newUserId: string, referrerId: string): Promise<{ success: boolean, message: string, bonus: number }> => {
+  try {
+    if (newUserId === referrerId) return { success: false, message: "Self-referral", bonus: 0 };
+
+    const newUserKey = `user:${newUserId}`;
+    const referrerKey = `user:${referrerId}`;
+
+    const [newUser, referrer] = await Promise.all([
+      kv.get<UserData>(newUserKey),
+      kv.get<UserData>(referrerKey)
+    ]);
+
+    // 1. Validate Referrer exists
+    if (!referrer) {
+      return { success: false, message: "Invalid Referrer ID", bonus: 0 };
+    }
+
+    // 2. Validate New User is actually new (or hasn't been referred yet)
+    // If user exists and has balance > 0 or has already been referred, deny.
+    if (newUser && (newUser.referredBy || newUser.balance > 100)) {
+      return { success: false, message: "User already exists", bonus: 0 };
+    }
+
+    // Initialize New User if not exists
+    const finalNewUser = newUser || { 
+      balance: 0, 
+      quota: INITIAL_QUOTA,
+      isBanned: false, 
+      transactions: [], 
+      lastUpdated: Date.now() 
+    };
+
+    // Apply Logic
+    finalNewUser.referredBy = referrerId;
+    finalNewUser.balance += WELCOME_BONUS; // 2000 Bonus for New User
+    finalNewUser.transactions.push(`REF_WELCOME_${referrerId}`);
+
+    referrer.balance += REFERRAL_REWARD; // 2000 Reward for Referrer
+    referrer.referrals = referrer.referrals || [];
+    referrer.referrals.push(newUserId);
+    referrer.transactions.push(`REF_REWARD_${newUserId}`);
+
+    // Atomic-ish Save
+    await Promise.all([
+      kv.set(newUserKey, finalNewUser),
+      kv.set(referrerKey, referrer)
+    ]);
+
+    return { success: true, message: "Referral Successful", bonus: WELCOME_BONUS };
+
+  } catch (error) {
+    console.error("Referral Error:", error);
+    return { success: false, message: "Server Error", bonus: 0 };
   }
 };
 

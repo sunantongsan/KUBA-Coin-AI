@@ -1,12 +1,14 @@
 
-
-
 export const CONTRACT_ADDRESS = "EQDCCMpdq2lab20fVNcXTx44TrGfAnNDvWiFWt9wDfDUY5YT";
 export const KUBA_LOGO_URL = "https://iili.io/KbAT4Jp.png";
 export const MASCOT_IMAGE_URL = "https://picsum.photos/seed/kubamascot/200/200"; 
 export const INITIAL_QUOTA = 5;
 export const AD_REWARD_QUOTA = 2; // Reward 2 credits per ad as requested
 export const INTERACTION_REWARD = 200;
+
+// REFERRAL CONFIGURATION (Big Heart / Jai Pum Mode)
+export const REFERRAL_REWARD = 2000; // Reward for the inviter
+export const WELCOME_BONUS = 2000;   // Reward for the new user (friend)
 
 // AdGem Configuration (Offerwall)
 export const ADGEM_APP_ID = "41341"; 
