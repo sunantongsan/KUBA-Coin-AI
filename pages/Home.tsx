@@ -53,6 +53,8 @@ const Home: React.FC = () => {
 
     switch (platform) {
       case 'tg':
+        // Telegram relies on the OG tags of the URL being shared. 
+        // Note: For t.me links, the image comes from BotFather settings.
         const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
         if (window.Telegram?.WebApp?.openTelegramLink) {
            window.Telegram.WebApp.openTelegramLink(tgUrl);
@@ -61,8 +63,9 @@ const Home: React.FC = () => {
         }
         break;
       case 'x':
-        // Specifically for X, we can add hashtags or mentions
-        const xText = encodeURIComponent(text + "\n\n@KubacoinAirdrop #KUBA #Airdrop #Crypto");
+        // Specifically for X, we append the image URL to the text to force a media preview/link
+        // We also add hashtags
+        const xText = encodeURIComponent(`${text}\n\n${KUBA_LOGO_URL}\n\n@KubacoinAirdrop #KUBA #Airdrop #Crypto`);
         window.open(`https://twitter.com/intent/tweet?text=${xText}&url=${encodedUrl}`, '_blank');
         break;
       case 'fb':
@@ -86,10 +89,11 @@ const Home: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center flex-grow space-y-5 animate-fade-in py-6 relative">
       
-      {/* SHARE MODAL - PREMIUM SOCIAL CARD STYLE */}
+      {/* SHARE MODAL - PREMIUM SOCIAL CARD STYLE (STATIC / NO BOUNCE) */}
       {showShareModal && (
         <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-fade-in">
-          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black w-full max-w-sm rounded-3xl border border-gray-700 shadow-[0_0_50px_rgba(255,215,0,0.2)] p-6 relative animate-bounce-slow overflow-hidden">
+          {/* Removed animate-bounce-slow from below div */}
+          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black w-full max-w-sm rounded-3xl border border-gray-700 shadow-[0_0_50px_rgba(255,215,0,0.2)] p-6 relative overflow-hidden">
             
             {/* Background Decoration */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-kuba-yellow rounded-full filter blur-[80px] opacity-20"></div>
@@ -108,11 +112,11 @@ const Home: React.FC = () => {
             {/* VISUAL PREVIEW CARD (Simulates a Social Media Link Preview) */}
             <div className="bg-black rounded-xl border border-gray-700 overflow-hidden mb-6 relative group transform hover:scale-[1.02] transition-transform">
                {/* "Image" Area */}
-               <div className="h-32 bg-gray-800 flex items-center justify-center relative overflow-hidden">
+               <div className="h-40 bg-gray-800 flex items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-blue-900 opacity-50"></div>
-                  <img src={KUBA_LOGO_URL} className="w-20 h-20 rounded-full border-4 border-white shadow-lg relative z-10 bg-kuba-yellow" />
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-kuba-yellow text-[10px] font-bold px-2 py-1 rounded">
-                     AI CHATBOT
+                  <img src={KUBA_LOGO_URL} className="w-full h-full object-cover opacity-90" />
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-kuba-yellow text-[10px] font-bold px-2 py-1 rounded border border-kuba-yellow">
+                     AI AIRDROP
                   </div>
                </div>
                

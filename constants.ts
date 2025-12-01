@@ -1,5 +1,6 @@
 
 
+
 export const CONTRACT_ADDRESS = "EQDCCMpdq2lab20fVNcXTx44TrGfAnNDvWiFWt9wDfDUY5YT";
 // Using the specific Bald Guy image provided by user
 export const KUBA_LOGO_URL = "https://img5.pic.in.th/file/secure-sv1/bald-1.jpg";
