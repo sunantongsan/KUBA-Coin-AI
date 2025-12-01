@@ -63,16 +63,18 @@ const Home: React.FC = () => {
         }
         break;
       case 'x':
-        // Specifically for X, we append the image URL to the text to force a media preview/link
-        // We also add hashtags
-        const xText = encodeURIComponent(`${text}\n\n${KUBA_LOGO_URL}\n\n@KubacoinAirdrop #KUBA #Airdrop #Crypto`);
+        // Replaced raw image URL with the specific Official X Status Link as requested
+        const xStatusLink = "https://x.com/KubacoinAirdrop/status/1987437597522866263?s=20";
+        const xText = encodeURIComponent(`${text}\n\n${xStatusLink}\n\n@KubacoinAirdrop #KUBA #Airdrop #Crypto`);
         window.open(`https://twitter.com/intent/tweet?text=${xText}&url=${encodedUrl}`, '_blank');
         break;
       case 'fb':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
         break;
       case 'copy':
-        navigator.clipboard.writeText(`${text}\n${url}`);
+        // For copy to clipboard, we include the status link too so they can paste it nicely
+        const copyStatusLink = "https://x.com/KubacoinAirdrop/status/1987437597522866263?s=20";
+        navigator.clipboard.writeText(`${text}\n${copyStatusLink}\n${url}`);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
         break;
@@ -92,7 +94,6 @@ const Home: React.FC = () => {
       {/* SHARE MODAL - PREMIUM SOCIAL CARD STYLE (STATIC / NO BOUNCE) */}
       {showShareModal && (
         <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-fade-in">
-          {/* Removed animate-bounce-slow from below div */}
           <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black w-full max-w-sm rounded-3xl border border-gray-700 shadow-[0_0_50px_rgba(255,215,0,0.2)] p-6 relative overflow-hidden">
             
             {/* Background Decoration */}
