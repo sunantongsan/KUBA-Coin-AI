@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../App';
 import { generateLocalResponse, getGreeting } from '../services/localAi';
@@ -8,6 +9,7 @@ import { MONETAG_DIRECT_LINK, INTERACTION_REWARD, TELEGRAM_BOT_USERNAME, AD_REWA
 
 const DAILY_AD_TARGET = 5;
 const DAILY_MISSION_REWARD = 1000;
+const AD_WAIT_SECONDS = 15;
 
 const Chat: React.FC = () => {
   const { 
@@ -25,6 +27,7 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [adCountdown, setAdCountdown] = useState<number | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -58,56 +61,72 @@ const Chat: React.FC = () => {
         timestamp: Date.now()
       }]);
     }
+    // Check if there's a pending ad on mount
+    checkAdStatus();
   }, []);
 
-  // Strict Ad Watch Logic (localStorage based)
-  const checkAdReward = () => {
+  // Ad Status Check Logic
+  const checkAdStatus = () => {
     const lastClickStr = localStorage.getItem('kuba_ad_click_ts');
     if (lastClickStr) {
       const lastClickTime = parseInt(lastClickStr, 10);
       const elapsed = Date.now() - lastClickTime;
-      
-      // Clear the timestamp so it doesn't trigger again automatically
-      localStorage.removeItem('kuba_ad_click_ts');
+      const remaining = Math.ceil((AD_WAIT_SECONDS * 1000 - elapsed) / 1000);
 
-      // Requirement: 15 seconds
-      if (elapsed >= 15000) {
-        setIsLoading(true);
-        setTimeout(() => {
-          addQuota();
-          incrementAdsWatched(); // Update mission progress
-          setIsLoading(false);
-          playSoundEffect('game');
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'model',
-            text: `✅ เยี่ยมมาก! ดูโฆษณาจบครบถ้วน รับโควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้ง!\n(Ad verified. Quota replenished.)`,
-            timestamp: Date.now()
-          }]);
-        }, 800);
+      if (remaining > 0) {
+        // Resume countdown
+        setAdCountdown(remaining);
       } else {
-        playSoundEffect('cartoon');
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'model',
-          text: `❌ เร็วไปพ่อหนุ่ม! ต้องดูโฆษณาอย่างน้อย 15 วินาที\n(Too fast! You must stay on the ad page for at least 15 seconds.)`,
-          timestamp: Date.now()
-        }]);
+        // Success immediately
+        completeAdReward();
       }
     }
   };
 
-  // Check on Mount and Visibility Change
+  const completeAdReward = () => {
+    const lastClickStr = localStorage.getItem('kuba_ad_click_ts');
+    if (!lastClickStr) return; // Already claimed
+
+    localStorage.removeItem('kuba_ad_click_ts');
+    setAdCountdown(null);
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      addQuota();
+      incrementAdsWatched(); // Update mission progress
+      setIsLoading(false);
+      playSoundEffect('game');
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'model',
+        text: `✅ เยี่ยมมาก! ดูโฆษณาครบตามเวลา รับโควต้าเพิ่ม ${AD_REWARD_QUOTA} ครั้ง!\n(Ad verified. Quota replenished.)`,
+        timestamp: Date.now()
+      }]);
+    }, 500);
+  };
+
+  // Countdown Timer Effect
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    if (adCountdown !== null && adCountdown > 0) {
+      timer = setTimeout(() => {
+        setAdCountdown(prev => (prev !== null ? prev - 1 : null));
+      }, 1000);
+    } else if (adCountdown === 0) {
+      // Timer finished
+      completeAdReward();
+    }
+    return () => clearTimeout(timer);
+  }, [adCountdown]);
+
+
+  // Check on Visibility Change (User comes back from Ad)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        checkAdReward();
+        checkAdStatus();
       }
     };
-    
-    // Check immediately in case of reload
-    checkAdReward();
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
@@ -282,15 +301,17 @@ const Chat: React.FC = () => {
     // 1. Mark Start Time in Storage (Survives app close/reload)
     localStorage.setItem('kuba_ad_click_ts', Date.now().toString());
 
-    // 2. Open Direct Link (Primary monetization method)
-    // Removed automatic SDK trigger to prevent hidden popups
+    // 2. Set Visual Countdown
+    setAdCountdown(AD_WAIT_SECONDS);
+
+    // 3. Open Direct Link
     setTimeout(() => {
       if (window.Telegram?.WebApp?.openLink && window.Telegram.WebApp.isVersionAtLeast('6.4')) {
         window.Telegram.WebApp.openLink(MONETAG_DIRECT_LINK, { try_instant_view: false });
       } else {
         window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
       }
-    }, 100); 
+    }, 800); 
   };
 
   const handleClaimDaily = () => {
@@ -360,6 +381,30 @@ const Chat: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full relative" ref={chatContainerRef}>
+      
+      {/* Full Screen Ad Countdown Overlay */}
+      {adCountdown !== null && adCountdown > 0 && (
+        <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+            <div className="text-6xl mb-6 animate-bounce">⏳</div>
+            <h2 className="text-2xl font-black text-kuba-yellow mb-2 uppercase tracking-widest">
+              กำลังยืนยันโฆษณา...
+            </h2>
+            <div className="text-7xl font-mono font-black text-white mb-6 bg-gray-900 px-6 py-2 rounded-xl border-4 border-gray-700">
+              {adCountdown}
+            </div>
+            <p className="text-gray-400 text-sm animate-pulse max-w-xs">
+              กรุณารอสักครู่... ระบบกำลังตรวจสอบการรับชม<br/>
+              (Please wait while we verify your ad view)
+            </p>
+            <div className="mt-8 w-64 h-2 bg-gray-800 rounded-full overflow-hidden">
+               <div 
+                 className="h-full bg-kuba-yellow transition-all duration-1000 ease-linear"
+                 style={{ width: `${((AD_WAIT_SECONDS - adCountdown) / AD_WAIT_SECONDS) * 100}%` }}
+               />
+            </div>
+        </div>
+      )}
+
       {/* Studio Settings Modal (SFX Only) */}
       {showVoiceModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
@@ -403,7 +448,7 @@ const Chat: React.FC = () => {
         </div>
       )}
 
-      {/* PROMINENT DAILY REWARD CLAIM BUTTON (NEW) */}
+      {/* PROMINENT DAILY REWARD CLAIM BUTTON */}
       {isMissionComplete && !state.dailyRewardClaimed && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 animate-bounce cursor-pointer" onClick={handleClaimDaily}>
             <div className="bg-kuba-yellow text-black border-4 border-black px-6 py-2 rounded-full font-black text-lg shadow-[0_0_15px_rgba(255,215,0,0.8)] flex items-center gap-2 whitespace-nowrap hover:scale-105 transition-transform">
@@ -412,7 +457,7 @@ const Chat: React.FC = () => {
         </div>
       )}
 
-      {/* Top Bar with Sound Toggle & Daily Mission */}
+      {/* Top Bar */}
       <div className="flex flex-col gap-2 mb-2">
         
         {/* Row 1: Status & Actions */}
