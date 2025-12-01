@@ -4,7 +4,7 @@ export const CONTRACT_ADDRESS = "EQDCCMpdq2lab20fVNcXTx44TrGfAnNDvWiFWt9wDfDUY5Y
 export const KUBA_LOGO_URL = "https://iili.io/KbAT4Jp.png";
 export const MASCOT_IMAGE_URL = "https://picsum.photos/seed/kubamascot/200/200"; 
 export const INITIAL_QUOTA = 5;
-export const AD_REWARD_QUOTA = 5; // Reward 5 credits per ad
+export const AD_REWARD_QUOTA = 2; // Reward 2 credits per ad as requested
 export const INTERACTION_REWARD = 200;
 
 // AdGem Configuration (Offerwall)
