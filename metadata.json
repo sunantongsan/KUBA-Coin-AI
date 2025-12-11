@@ -1,5 +1,8 @@
 {
   "name": "KUBA Coin AI",
   "description": "A fun, troll-ish AI chatbot and wallet for the KUBA community on Telegram.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
 }
