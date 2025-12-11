@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { TonConnectUIProvider } from '@tonconnect/ui-react';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -28,14 +29,17 @@ if (window.Telegram?.WebApp) {
   ) {
     webApp.setHeaderColor('#FFD700'); 
   }
-
-  // Note: CloudStorage polyfill is handled in index.html before external SDKs load.
-  // Note: We use localStorage for data persistence which is compatible with all versions.
 }
+
+// Manifest URL for TON Connect (Must be absolute in production, relative works for some local setups but absolute is safer)
+// Since we are in a dynamic environment, we use window.location.origin
+const manifestUrl = `${window.location.origin}/tonconnect-manifest.json`;
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <TonConnectUIProvider manifestUrl={manifestUrl}>
+      <App />
+    </TonConnectUIProvider>
   </React.StrictMode>
 );

@@ -1,6 +1,6 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getUserData } from '../../services/kv';
+import { getUserData, incrementVisits } from '../../services/kv';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { user_id } = req.query;
@@ -10,11 +10,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Fire and forget visit increment
+    incrementVisits().catch(console.error);
+
     const userData = await getUserData(user_id);
     
     // Return 0 if user doesn't exist yet in DB
     return res.status(200).json({
       balance: userData ? userData.balance : 0,
+      lockedBalance: userData?.lockedBalance || 0,
+      unlockDate: userData?.unlockDate || null,
       isBanned: userData ? userData.isBanned : false,
       referralCount: userData?.referrals?.length || 0
     });

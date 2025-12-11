@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { userId, balance, quota } = req.body;
+    const { userId, balance, quota, lockedBalance, unlockDate } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: 'Missing userId' });
@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // to ensure the request actually comes from that user. 
     // For this demo/prototype, we accept the ID.
 
-    const success = await saveUserState(userId, { balance, quota });
+    const success = await saveUserState(userId, { balance, quota, lockedBalance, unlockDate });
 
     if (success) {
       return res.status(200).json({ success: true });

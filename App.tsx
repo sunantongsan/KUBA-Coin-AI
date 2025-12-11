@@ -18,6 +18,7 @@ interface AppContextType {
   setSoundMode: (mode: 'off' | 'comedy' | 'cartoon' | 'game' | 'laughter') => void;
   incrementAdsWatched: () => void;
   claimDailyReward: (amount: number) => void;
+  lockTokens: (amount: number, days: number) => void; // New Action
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -46,7 +47,6 @@ const App: React.FC = () => {
     const storageKey = userId ? `kuba_data_v1_${userId}` : 'kuba_data_v1_guest';
 
     // Normalize Language Detection
-    // Telegram usually returns 2-char codes (e.g. 'th', 'en', 'ru')
     const rawLang = tgUser?.language_code || navigator.language || 'en';
     let detectedLang = 'en-US'; // Default
 
@@ -64,32 +64,42 @@ const App: React.FC = () => {
       telegramUserId: userId,
       telegramUsername: tgUser?.username || tgUser?.first_name || 'Guest',
       balance: 0,
+      
+      // VESTING DEFAULTS
+      lockedBalance: 0,
+      unlockDate: null,
+
       dailyQuota: INITIAL_QUOTA,
       lastResetDate: today,
       hasSeenAdToday: false,
-      language: detectedLang, // Use normalized detected language
-      soundMode: 'comedy', // Default Sound Mode (90s Style)
+      language: detectedLang, 
+      soundMode: 'comedy', 
       adsWatchedToday: 0,
       dailyRewardClaimed: false,
       referralCount: 0
     };
 
     if (saved) {
-      const parsed = JSON.parse(saved);
-      const mergedState = { ...defaultState, ...parsed, telegramUserId: userId, telegramUsername: defaultState.telegramUsername };
-      
-      // Reset if new day
-      if (parsed.lastResetDate !== today) {
-        return { 
-          ...mergedState, 
-          dailyQuota: INITIAL_QUOTA, 
-          lastResetDate: today, 
-          hasSeenAdToday: false,
-          adsWatchedToday: 0,
-          dailyRewardClaimed: false
-        };
+      try {
+        const parsed = JSON.parse(saved);
+        const mergedState = { ...defaultState, ...parsed, telegramUserId: userId, telegramUsername: defaultState.telegramUsername };
+        
+        // Reset if new day
+        if (parsed.lastResetDate !== today) {
+          return { 
+            ...mergedState, 
+            dailyQuota: INITIAL_QUOTA, 
+            lastResetDate: today, 
+            hasSeenAdToday: false,
+            adsWatchedToday: 0,
+            dailyRewardClaimed: false
+          };
+        }
+        return mergedState;
+      } catch (e) {
+        console.error("Failed to parse saved state", e);
+        return defaultState;
       }
-      return mergedState;
     }
     return defaultState;
   });
@@ -101,7 +111,6 @@ const App: React.FC = () => {
 
       // 1. Check Referral
       const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
-      // Format: ref_12345 or just 12345
       if (startParam && startParam !== state.telegramUserId.toString()) {
          const referrerId = startParam.replace('ref_', '');
          try {
@@ -128,14 +137,15 @@ const App: React.FC = () => {
           if (data.isBanned) alert("🚫 Account Suspended");
 
           setState(prev => {
-             // Prefer Server balance if higher (prevents wipe), but trust referral bonus addition
-             let newBalance = prev.balance;
-             if (data.balance > newBalance) {
-                 newBalance = data.balance;
-             }
+             // Use server balance if it's generally higher (basic sync strategy)
+             // or authoritative. Here we trust server.
+             const newBalance = data.balance > prev.balance ? data.balance : prev.balance;
+             
              return { 
                ...prev, 
                balance: newBalance,
+               lockedBalance: data.lockedBalance || prev.lockedBalance,
+               unlockDate: data.unlockDate || prev.unlockDate,
                referralCount: data.referralCount || 0
              };
           });
@@ -148,7 +158,7 @@ const App: React.FC = () => {
     initApp();
   }, [state.telegramUserId]);
 
-  // Persist State to LocalStorage
+  // Persist State
   useEffect(() => {
     const storageKey = state.telegramUserId ? `kuba_data_v1_${state.telegramUserId}` : 'kuba_data_v1_guest';
     localStorage.setItem(storageKey, JSON.stringify(state));
@@ -197,8 +207,38 @@ const App: React.FC = () => {
             })
         }).catch(console.error);
       }
-      
       return newState;
+    });
+  };
+
+  const lockTokens = (amount: number, days: number) => {
+    setState(prev => {
+        const unlockDate = new Date();
+        unlockDate.setDate(unlockDate.getDate() + days);
+        const isoDate = unlockDate.toISOString();
+        const newBalance = Math.max(0, prev.balance - amount);
+        const newLocked = prev.lockedBalance + amount;
+
+        // Sync to Server
+        if (prev.telegramUserId) {
+            fetch('/api/user/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    userId: prev.telegramUserId,
+                    balance: newBalance,
+                    lockedBalance: newLocked,
+                    unlockDate: isoDate
+                })
+            }).catch(console.error);
+        }
+
+        return {
+            ...prev,
+            balance: newBalance,
+            lockedBalance: newLocked,
+            unlockDate: isoDate
+        };
     });
   };
 
@@ -211,7 +251,8 @@ const App: React.FC = () => {
       setLanguage, 
       setSoundMode,
       incrementAdsWatched,
-      claimDailyReward
+      claimDailyReward,
+      lockTokens
     }}>
       <HashRouter>
         <StartupRedirect />

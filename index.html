@@ -20,25 +20,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-      // 1. Process Polyfill for Browser (Fixes "process is not defined" -> Dark Screen)
-      window.process = { env: {} };
+      // 1. Process Polyfill for Browser
+      if (typeof window.process === 'undefined') {
+        window.process = { env: { API_KEY: '' } };
+      }
 
-      // 2. Robust Polyfill for CloudStorage on Telegram < 6.9
+      // 2. CloudStorage Polyfill for older Telegram versions
       (function() {
         try {
           if (window.Telegram && window.Telegram.WebApp) {
             var wa = window.Telegram.WebApp;
             var needsPolyfill = false;
             
-            // Check version safely
             if (wa.isVersionAtLeast) {
                 if (!wa.isVersionAtLeast('6.9')) needsPolyfill = true;
             } else {
-                needsPolyfill = true; // v6.0 or older
+                needsPolyfill = true;
             }
 
             if (needsPolyfill) {
-              console.log("Applying CloudStorage Polyfill for older Telegram version");
+              console.log("Applying CloudStorage Polyfill");
               var ls = {
                 getItem: function(k, cb) { cb && cb(null, localStorage.getItem(k)); },
                 setItem: function(k, v, cb) { localStorage.setItem(k, v); cb && cb(null, true); },
@@ -55,7 +56,6 @@
                 getKeys: function(cb) { cb && cb(null, Object.keys(localStorage)); }
               };
               
-              // Proxy Override (Fallback)
               if (window.Proxy) {
                 try {
                    var proxy = new Proxy(wa, {
@@ -67,16 +67,11 @@
                       }
                    });
                    window.Telegram.WebApp = proxy;
-                   console.log("CloudStorage Polyfill applied via Proxy");
-                } catch(proxyErr) {
-                   console.warn("Polyfill Proxy failed", proxyErr);
-                }
+                } catch(e) {}
               }
             }
           }
-        } catch (e) {
-           console.warn("Polyfill initialization error", e);
-        }
+        } catch (e) {}
       })();
     </script>
     <!-- HTML2Canvas for Screenshots -->
@@ -104,6 +99,7 @@
               'tilt': 'tilt 5s ease-in-out infinite',
               'spin-reverse': 'spin-reverse 10s linear infinite',
               'marquee': 'marquee 25s linear infinite',
+              'fade-in': 'fadeIn 0.5s ease-out',
             },
             keyframes: {
               float: {
@@ -126,6 +122,10 @@
               marquee: {
                 '0%': { transform: 'translateX(100%)' },
                 '100%': { transform: 'translateX(-100%)' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
               }
             }
           }
@@ -149,17 +149,18 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
-    "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.13",
-    "crypto": "https://aistudiocdn.com/crypto@^1.0.1",
-    "@vercel/kv": "https://aistudiocdn.com/@vercel/kv@^3.0.0"
+    "react": "https://esm.sh/react@^19.2.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.1/",
+    "react/": "https://esm.sh/react@^19.2.1/",
+    "vite": "https://esm.sh/vite@^7.2.7",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "@vercel/node": "https://esm.sh/@vercel/node@^5.5.15",
+    "crypto": "https://esm.sh/crypto@^1.0.1",
+    "@vercel/kv": "https://esm.sh/@vercel/kv@^3.0.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.10.1",
+    "recharts": "https://esm.sh/recharts@^3.5.1",
+    "@tonconnect/ui-react": "https://esm.sh/@tonconnect/ui-react@^2.3.1"
   }
 }
 </script>

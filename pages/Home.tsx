@@ -10,11 +10,22 @@ const Home: React.FC = () => {
   const [animClass, setAnimClass] = useState('animate-float');
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  
+  // Stats State
+  const [stats, setStats] = useState({ totalCoins: 0, totalUsers: 0, totalVisits: 0, activeNow: 0 });
 
   useEffect(() => {
     const animations = ['animate-float', 'animate-wiggle', 'animate-bounce-slow'];
     const randomAnim = animations[Math.floor(Math.random() * animations.length)];
     setAnimClass(randomAnim);
+
+    // Fetch Stats
+    fetch('/api/stats/index')
+      .then(res => res.json())
+      .then(data => {
+         if(data && !data.error) setStats(data);
+      })
+      .catch(console.error);
   }, []);
 
   const handleEarnClick = () => {
@@ -265,12 +276,20 @@ const Home: React.FC = () => {
         </button>
       </div>
 
-      {/* Info Box */}
-      <div className="w-full bg-gray-900/50 border border-dashed border-gray-700 rounded-xl p-3 text-center">
-         <p className="text-[10px] text-gray-500">
-           New User Bonus: <span className="text-green-400 font-bold">{WELCOME_BONUS.toLocaleString()} KUBA</span><br/>
-           Referral Reward: <span className="text-kuba-yellow font-bold">{REFERRAL_REWARD.toLocaleString()} KUBA</span>
-         </p>
+      {/* GLOBAL STATS BOX */}
+      <div className="w-full bg-gray-900/80 border border-gray-700 rounded-xl p-3 grid grid-cols-3 divide-x divide-gray-700">
+          <div className="text-center">
+             <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Users</div>
+             <div className="text-lg font-black text-white">{stats.totalUsers.toLocaleString()}</div>
+          </div>
+          <div className="text-center">
+             <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Coins Given</div>
+             <div className="text-lg font-black text-kuba-yellow">{(stats.totalCoins / 1000000).toFixed(1)}M</div>
+          </div>
+          <div className="text-center">
+             <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Visits</div>
+             <div className="text-lg font-black text-blue-400">{stats.totalVisits.toLocaleString()}</div>
+          </div>
       </div>
     </div>
   );

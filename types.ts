@@ -20,6 +20,11 @@ export interface AppState {
   
   // App Data
   balance: number;
+  
+  // VESTING / LOCKING DATA
+  lockedBalance: number;
+  unlockDate: string | null; // ISO Date String
+
   dailyQuota: number;
   lastResetDate: string;
   hasSeenAdToday: boolean;

@@ -5,6 +5,8 @@ import { INITIAL_QUOTA, WELCOME_BONUS, REFERRAL_REWARD } from '../constants';
 // Define User Data Structure for DB
 export interface UserData {
   balance: number;
+  lockedBalance?: number;
+  unlockDate?: string | null;
   quota?: number; 
   isBanned: boolean;
   transactions: string[]; // Store transaction IDs to prevent duplicates
@@ -12,6 +14,47 @@ export interface UserData {
   referrals?: string[]; // List of IDs this user has invited
   lastUpdated: number;
 }
+
+// === STATS FUNCTIONS ===
+
+export const updateGlobalStats = async (coinChange: number, isNewUser: boolean) => {
+    try {
+        const pipeline = kv.pipeline();
+        if (coinChange > 0) pipeline.incrby('stats:total_coins', Math.floor(coinChange));
+        if (isNewUser) pipeline.incr('stats:total_users');
+        await pipeline.exec();
+    } catch (e) {
+        console.error("Stats Update Error", e);
+    }
+};
+
+export const incrementVisits = async () => {
+    try {
+        await kv.incr('stats:visits');
+    } catch (e) {
+        console.error("Visit Incr Error", e);
+    }
+};
+
+export const getAppStats = async () => {
+    try {
+        const [coins, users, visits] = await Promise.all([
+            kv.get('stats:total_coins'),
+            kv.get('stats:total_users'),
+            kv.get('stats:visits')
+        ]);
+        return {
+            totalCoins: Number(coins) || 0,
+            totalUsers: Number(users) || 0,
+            totalVisits: Number(visits) || 0,
+            activeNow: Math.floor(Math.random() * 50) + 10 // Mock for now, real active requires socket/polling logic
+        };
+    } catch (e) {
+        return { totalCoins: 0, totalUsers: 0, totalVisits: 0, activeNow: 0 };
+    }
+};
+
+// === USER FUNCTIONS ===
 
 export const getUserData = async (userId: string): Promise<UserData | null> => {
   try {
@@ -26,9 +69,11 @@ export const updateBalance = async (userId: string, amount: number, transactionI
   try {
     const userKey = `user:${userId}`;
     let userData = await kv.get<UserData>(userKey);
+    let isNew = false;
 
     if (!userData) {
       userData = { balance: 0, isBanned: false, transactions: [], lastUpdated: Date.now() };
+      isNew = true;
     }
 
     // Check for duplicate transaction
@@ -47,6 +92,10 @@ export const updateBalance = async (userId: string, amount: number, transactionI
     userData.lastUpdated = Date.now();
 
     await kv.set(userKey, userData);
+    
+    // Update Global Stats
+    await updateGlobalStats(amount, isNew);
+
     return true;
   } catch (error) {
     console.error("KV Update Error:", error);
@@ -54,22 +103,38 @@ export const updateBalance = async (userId: string, amount: number, transactionI
   }
 };
 
-// NEW: Generic Save for Client-Side updates (Quota, Chat Rewards)
+// NEW: Generic Save for Client-Side updates (Quota, Chat Rewards, Locking)
 export const saveUserState = async (userId: string, data: Partial<UserData>): Promise<boolean> => {
   try {
     const userKey = `user:${userId}`;
     let userData = await kv.get<UserData>(userKey);
+    let isNew = false;
 
     if (!userData) {
       userData = { balance: 0, isBanned: false, transactions: [], lastUpdated: Date.now() };
+      isNew = true;
     }
     
+    // Calculate coin difference for stats
+    let coinDelta = 0;
+    if (data.balance !== undefined && data.balance > userData.balance) {
+        coinDelta = data.balance - userData.balance;
+    }
+
     // Update fields if provided
     if (data.balance !== undefined) userData.balance = data.balance;
     if (data.quota !== undefined) userData.quota = data.quota;
+    if (data.lockedBalance !== undefined) userData.lockedBalance = data.lockedBalance;
+    if (data.unlockDate !== undefined) userData.unlockDate = data.unlockDate;
 
     userData.lastUpdated = Date.now();
     await kv.set(userKey, userData);
+
+    // Update Global Stats
+    if (coinDelta > 0 || isNew) {
+        await updateGlobalStats(coinDelta, isNew);
+    }
+
     return true;
   } catch (error) {
     console.error("KV Save Error:", error);
@@ -125,6 +190,9 @@ export const processReferral = async (newUserId: string, referrerId: string): Pr
       kv.set(newUserKey, finalNewUser),
       kv.set(referrerKey, referrer)
     ]);
+
+    // Update Stats: New User + Total Coins (Welcome + Referral)
+    await updateGlobalStats(WELCOME_BONUS + REFERRAL_REWARD, !newUser);
 
     return { success: true, message: "Referral Successful", bonus: WELCOME_BONUS };
 
